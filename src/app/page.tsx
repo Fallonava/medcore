@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import useSWR, { mutate } from "swr";
+// Removed unused SWR import
 import { Activity, Users, MonitorPlay, AlertCircle, Search, Filter, Zap, Power, Clock, TrendingUp, BarChart3, CalendarCheck, BriefcaseMedical, FileClock, CheckCircle2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Doctor, LeaveRequest, Shift, Settings } from "@/lib/data-service";
@@ -10,23 +10,38 @@ import { LiveClock } from "@/components/LiveClock";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useRouter } from "next/navigation";
 
-
 export default function Home() {
   const router = useRouter();
-  const { data: rawDoctors, mutate: mutateDoctors } = useSWR<Doctor[]>('/api/doctors', { refreshInterval: 10000 });
-  const { data: rawLeaves } = useSWR<LeaveRequest[]>('/api/leaves', { refreshInterval: 30000 });
-  const { data: rawShifts, mutate: mutateShifts } = useSWR<Shift[]>('/api/shifts', { refreshInterval: 10000 });
+  const [mounted, setMounted] = useState(false);
+  const [now, setNow] = useState(new Date());
 
-  const doctors = Array.isArray(rawDoctors) ? rawDoctors : [];
-  const leaves = Array.isArray(rawLeaves) ? rawLeaves : [];
-  const shifts = Array.isArray(rawShifts) ? rawShifts : [];
-  const { data: settings, mutate: mutateSettings } = useSWR<Settings>('/api/settings');
+  useEffect(() => {
+    setMounted(true);
+    setNow(new Date());
+  }, []);
+  const [doctors, setDoctors] = useState<Doctor[]>([]);
+  const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
+  const [shifts, setShifts] = useState<Shift[]>([]);
+  const [settings, setSettings] = useState<Settings | null>(null);
+
+  useEffect(() => {
+    const es = new EventSource('/api/stream/live');
+    es.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.doctors) setDoctors(data.doctors);
+        if (data.shifts) setShifts(data.shifts);
+        if (data.leaves) setLeaves(data.leaves);
+        if (data.settings) setSettings(data.settings);
+      } catch (err) {}
+    };
+    return () => es.close();
+  }, []);
 
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 200);
 
   // Calculate today's day index (0=Mon, 6=Sun)
-  const now = new Date();
   const todayDayIdx = now.getDay() === 0 ? 6 : now.getDay() - 1;
 
   // Today's date string for disabledDates comparison
@@ -34,7 +49,7 @@ export default function Home() {
 
   // Filter: Only show doctors who have an active shift TODAY (not disabled for today)
   const todayDoctors = useMemo(() => doctors.filter(doc =>
-    shifts.some(s => s.doctor === doc.name && s.dayIdx === todayDayIdx && !(s.disabledDates || []).includes(todayStr))
+    shifts.some(s => s.doctorId === doc.id && s.dayIdx === todayDayIdx && !(s.disabledDates || []).includes(todayStr))
   ), [doctors, shifts, todayDayIdx, todayStr]);
 
   // Automation Logic
@@ -48,7 +63,7 @@ export default function Home() {
     const previousSettings = { ...settings };
 
     // Optimistic update
-    mutateSettings({ ...settings, automationEnabled: newState }, false);
+    setSettings({ ...settings, automationEnabled: newState });
 
     try {
       const res = await fetch('/api/settings', {
@@ -57,12 +72,10 @@ export default function Home() {
         body: JSON.stringify({ automationEnabled: newState })
       });
       if (!res.ok) throw new Error('API Error');
-      mutateSettings(); // Revalidate from true server state
     } catch (e) {
       console.error("Failed to save settings", e);
       // Rollback on failure
-      mutateSettings(previousSettings, false);
-      mutateSettings(); // Re-fetch to be absolutely sure
+      setSettings(previousSettings);
     }
   };
 
@@ -78,7 +91,7 @@ export default function Home() {
     const previousShifts = shifts;
 
     // Optimistic update
-    mutateShifts(curr => curr?.map(s => s.id === shiftId ? { ...s, disabledDates: newDates } : s), false);
+    setShifts(curr => curr?.map(s => s.id === shiftId ? { ...s, disabledDates: newDates } : s));
 
     try {
       const res = await fetch('/api/shifts', {
@@ -87,12 +100,10 @@ export default function Home() {
         body: JSON.stringify({ id: shiftId, disabledDates: newDates })
       });
       if (!res.ok) throw new Error('API Error');
-      mutateShifts(); // Revalidate
     } catch (e) {
       console.error('Failed to toggle shift', e);
       // Rollback on failure
-      mutateShifts(previousShifts, false);
-      mutateShifts();
+      setShifts(previousShifts);
     }
   };
 
@@ -106,14 +117,14 @@ export default function Home() {
     const previousDoctors = doctors;
 
     // Optimistic update
-    mutateDoctors(docs => docs?.map(d =>
+    setDoctors(docs => docs?.map(d =>
       d.id === id ? {
         ...d,
         status,
         lastCall: (status === 'BUKA' || status === 'PENUH') ? timeString : d.lastCall,
         lastManualOverride: timestamp
       } : d
-    ), false);
+    ));
 
     try {
       const res = await fetch('/api/doctors', {
@@ -129,12 +140,10 @@ export default function Home() {
         })
       });
       if (!res.ok) throw new Error('API Error');
-      mutateDoctors(); // Revalidate
     } catch (e) {
       console.error('Failed to update doctor status', e);
       // Rollback on failure
-      mutateDoctors(previousDoctors, false);
-      mutateDoctors();
+      setDoctors(previousDoctors);
     }
   };
 
@@ -163,8 +172,14 @@ export default function Home() {
   };
 
   // Dynamic greeting
-  const hour = new Date().getHours();
+  const hour = now.getHours();
   const greeting = hour < 11 ? "Selamat Pagi" : hour < 15 ? "Selamat Siang" : hour < 18 ? "Selamat Sore" : "Selamat Malam";
+
+  if (!mounted) return (
+      <div className="w-full h-full flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
+      </div>
+  );
 
   return (
     <div className="w-full h-full px-3 lg:px-6 flex flex-col overflow-hidden">
@@ -410,7 +425,7 @@ export default function Home() {
                       <p className="text-[11px] text-slate-400 font-medium">{doc.specialty}</p>
                       {(() => {
                         const activeShift = shifts.find(s =>
-                          s.doctor === doc.name && s.dayIdx === todayDayIdx &&
+                          s.doctorId === doc.id && s.dayIdx === todayDayIdx &&
                           !(s.disabledDates || []).includes(todayStr) &&
                           s.registrationTime
                         );
@@ -443,7 +458,7 @@ export default function Home() {
 
                 {/* Shift Pills */}
                 {(() => {
-                  const docShiftsToday = shifts.filter(s => s.doctor === doc.name && s.dayIdx === todayDayIdx);
+                  const docShiftsToday = shifts.filter(s => s.doctorId === doc.id && s.dayIdx === todayDayIdx);
                   if (docShiftsToday.length === 0) return null;
                   const currentTimeMinutes = now.getHours() * 60 + now.getMinutes();
                   return (

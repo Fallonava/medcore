@@ -187,15 +187,13 @@ export async function runAutomation(): Promise<{ applied: number, failed: number
         const OVERRIDE_COOLDOWN_MS = 4 * 60 * 60 * 1000;
 
         for (const doc of doctors) {
-            if (doc.status === 'OPERASI') continue;
-
             // Check if there is an active manual override cooldown
             const isCooldownActive = doc.lastManualOverride
                 ? (now.getTime() - doc.lastManualOverride) < OVERRIDE_COOLDOWN_MS
                 : false;
 
             const isOnLeaveToday = leaves.some(leave =>
-                matchDoctorName(leave.doctor || (leaves.find(x => x.doctorId === leave.doctorId)?.doctor || ''), doc.name) &&
+                leave.doctorId === doc.id &&
                 isDateInLeavePeriod(todayStr, leave.startDate, leave.endDate)
             );
             if (isOnLeaveToday) {
@@ -207,7 +205,7 @@ export async function runAutomation(): Promise<{ applied: number, failed: number
                 continue;
             }
             const todayShifts = shifts.filter(s =>
-                s.doctor === doc.name && s.dayIdx === currentDayIdx && s.formattedTime &&
+                s.doctorId === doc.id && s.dayIdx === currentDayIdx && s.formattedTime &&
                 !(s.disabledDates || []).includes(todayStr)
             );
 
