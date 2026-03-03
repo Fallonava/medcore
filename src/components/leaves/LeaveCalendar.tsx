@@ -132,6 +132,23 @@ export function LeaveCalendar({ leaves, onRefresh }: LeaveCalendarProps) {
         weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
     });
 
+    // Hitung hari terpadat dalam bulan ini (tanggal dengan dokter cuti terbanyak)
+    const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+    const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+    const busiestDays = (() => {
+        const daysWithCount: { date: Date; count: number }[] = [];
+        for (let d = new Date(monthStart); d <= monthEnd; d.setDate(d.getDate() + 1)) {
+            const dateCopy = new Date(d);
+            const count = leaves.filter(l => isDateInLeave(dateCopy, l)).length;
+            if (count > 0) {
+                daysWithCount.push({ date: dateCopy, count });
+            }
+        }
+        return daysWithCount
+            .sort((a, b) => b.count - a.count)
+            .slice(0, 3);
+    })();
+
     return (
         <div className="flex flex-col lg:flex-row gap-6 h-full overflow-y-auto lg:overflow-hidden pb-6 lg:pb-0 custom-scrollbar pr-1 lg:pr-0">
 
@@ -252,45 +269,32 @@ export function LeaveCalendar({ leaves, onRefresh }: LeaveCalendarProps) {
                     </button>
                 </div>
 
-                {/* Ringkasan bulan ini */}
+                {/* Hari terpadat bulan ini */}
                 <div className="super-glass-card rounded-[32px] p-6 shadow-sm flex-shrink-0">
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
-                        Bulan Ini — {MONTHS_ID[currentDate.getMonth()]}
+                        Hari Terpadat — {MONTHS_ID[currentDate.getMonth()]}
                     </p>
-                    {leaves.some(l => {
-                        const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-                        const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-                        for (let d = new Date(monthStart); d <= monthEnd; d.setDate(d.getDate() + 1)) {
-                            if (isDateInLeave(new Date(d), l)) return true;
-                        }
-                        return false;
-                    }) ? (
+                    {busiestDays.length > 0 ? (
                         <div className="space-y-2">
-                            {leaves
-                                .filter(l => {
-                                    const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-                                    const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-                                    for (let d = new Date(monthStart); d <= monthEnd; d.setDate(d.getDate() + 1)) {
-                                        if (isDateInLeave(new Date(d), l)) return true;
-                                    }
-                                    return false;
-                                })
-                                .slice(0, 4)
-                                .map(leave => {
-                                    const conf = TYPE_CONFIG[leave.type] || { color: "text-slate-500", bg: "bg-slate-50", emoji: "📋" };
-                                    return (
-                                        <div key={leave.id} className="flex items-center justify-between text-xs">
-                                            <span className="font-semibold text-slate-700 truncate mr-2">{leave.doctor}</span>
-                                            <span className={cn("text-[9px] font-black px-2 py-0.5 rounded-lg flex-shrink-0", conf.color, conf.bg)}>
-                                                {conf.emoji} {leave.type}
-                                            </span>
-                                        </div>
-                                    );
-                                })
-                            }
+                            {busiestDays.map(({ date, count }) => (
+                                <div key={date.toISOString()} className="flex items-center justify-between text-xs">
+                                    <span className="font-semibold text-slate-700 truncate mr-2">
+                                        {date.toLocaleDateString('id-ID', {
+                                            weekday: 'short',
+                                            day: 'numeric',
+                                            month: 'short'
+                                        })}
+                                    </span>
+                                    <span className="text-[9px] font-black px-2 py-0.5 rounded-lg flex-shrink-0 text-amber-700 bg-amber-50">
+                                        {count} dokter cuti
+                                    </span>
+                                </div>
+                            ))}
                         </div>
                     ) : (
-                        <p className="text-xs text-slate-400 text-center py-2">Tidak ada cuti bulan ini</p>
+                        <p className="text-xs text-slate-400 text-center py-2">
+                            Belum ada cuti pada bulan ini.
+                        </p>
                     )}
                 </div>
             </div>
@@ -389,38 +393,6 @@ export function LeaveCalendar({ leaves, onRefresh }: LeaveCalendarProps) {
                     )}
                 </div>
 
-                {/* ── Semua Data Cuti (Footer) ── */}
-                {leaves.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-slate-50">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">
-                            Semua Data Cuti ({leaves.length})
-                        </p>
-                        <div className="space-y-1.5 max-h-44 overflow-y-auto custom-scrollbar">
-                            {leaves.map(leave => {
-                                const conf = TYPE_CONFIG[leave.type] || { color: "text-slate-500", bg: "bg-slate-50", emoji: "📋" };
-                                return (
-                                    <div key={leave.id} className="group flex items-center justify-between text-xs py-2 px-3 rounded-xl hover:bg-slate-50 transition-colors">
-                                        <div className="flex items-center gap-2 min-w-0">
-                                            <span className="font-semibold text-slate-700 truncate">{leave.doctor}</span>
-                                            <span className={cn("text-[9px] font-black px-1.5 py-0.5 rounded-md flex-shrink-0", conf.color, conf.bg)}>
-                                                {conf.emoji}
-                                            </span>
-                                        </div>
-                                        <div className="flex items-center gap-2 flex-shrink-0 ml-2">
-                                            <span className="text-slate-400">{new Date(leave.startDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} - {new Date(leave.endDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
-                                            <button
-                                                onClick={() => handleDelete(leave.id)}
-                                                className="opacity-0 group-hover:opacity-100 p-1 text-slate-300 hover:text-red-500 rounded-lg transition-all"
-                                            >
-                                                <Trash2 size={11} />
-                                            </button>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                )}
             </div>
 
             <LeaveRequestModal

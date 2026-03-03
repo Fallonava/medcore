@@ -7,6 +7,7 @@ import { LeaveCalendar } from "@/components/leaves/LeaveCalendar";
 import { Search, CalendarDays, UserCheck, Clock3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { LeaveRequest, Doctor } from "@/lib/data-service";
+import { AllLeavesModal } from "@/components/leaves/AllLeavesModal";
 
 export default function LeavesPage() {
     const { data: rawLeaves, mutate: mutateLeaves } = useSWR<LeaveRequest[]>('/api/leaves');
@@ -16,6 +17,7 @@ export default function LeavesPage() {
     const doctors = Array.isArray(rawDoctors) ? rawDoctors : [];
     const [searchQuery, setSearchQuery] = useState("");
     const debouncedSearch = useDebounce(searchQuery, 200);
+    const [isAllLeavesOpen, setIsAllLeavesOpen] = useState(false);
 
     const totalLeaves = leaves.length;
 
@@ -93,10 +95,15 @@ export default function LeavesPage() {
             <div className="flex overflow-x-auto md:grid md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8 pb-3 md:pb-0 custom-scrollbar snap-x snap-mandatory pr-1 md:pr-0 -mx-2 px-2 md:px-0 md:mx-0">
                 {stats.map((stat, idx) => {
                     const Icon = stat.icon;
+                const isTotalCard = stat.label === "Total Data Cuti";
                     return (
-                        <div
+                    <div
                             key={stat.label}
-                            className="super-glass-card p-5 md:p-6 rounded-[28px] md:rounded-[32px] flex items-center gap-4 md:gap-5 transition-all duration-500 hover:-translate-y-1 min-w-[260px] md:min-w-0 flex-shrink-0 snap-center md:snap-align-none"
+                        onClick={isTotalCard ? () => setIsAllLeavesOpen(true) : undefined}
+                        className={cn(
+                            "super-glass-card p-5 md:p-6 rounded-[28px] md:rounded-[32px] flex items-center gap-4 md:gap-5 transition-all duration-500 hover:-translate-y-1 min-w-[260px] md:min-w-0 flex-shrink-0 snap-center md:snap-align-none",
+                            isTotalCard && "cursor-pointer hover:shadow-lg hover:ring-2 hover:ring-blue-100"
+                        )}
                         >
                             <div className={cn("flex-shrink-0 w-14 h-14 md:w-16 md:h-16 rounded-[20px] md:rounded-[24px] flex items-center justify-center shadow-inner", stat.iconBg)}>
                                 <Icon className={cn("h-6 w-6 md:h-8 md:w-8", stat.color)} />
@@ -117,6 +124,16 @@ export default function LeavesPage() {
                     onRefresh={() => mutate('/api/leaves')}
                 />
             </div>
+
+            <AllLeavesModal
+                isOpen={isAllLeavesOpen}
+                onClose={() => setIsAllLeavesOpen(false)}
+                leaves={leaves}
+                onDelete={async (id: string) => {
+                    await fetch(`/api/leaves?id=${id}`, { method: 'DELETE' });
+                    mutate('/api/leaves');
+                }}
+            />
         </div>
     );
 }

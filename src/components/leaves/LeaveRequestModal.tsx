@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { X, CalendarDays } from "lucide-react";
+import { X, CalendarDays, Search } from "lucide-react";
 import useSWR from "swr";
 import type { Doctor } from "@/lib/data-service";
 
@@ -29,6 +29,17 @@ export function LeaveRequestModal({ isOpen, onClose, onSubmit }: Props) {
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [mounted, setMounted] = useState(false);
+    const [doctorSearch, setDoctorSearch] = useState("");
+    const [isDoctorListOpen, setIsDoctorListOpen] = useState(false);
+    const [highlightedIndex, setHighlightedIndex] = useState(0);
+
+    const filteredDoctors = useMemo(
+        () =>
+            doctors.filter(doc =>
+                doc.name.toLowerCase().includes(doctorSearch.toLowerCase())
+            ),
+        [doctors, doctorSearch]
+    );
 
     useEffect(() => { setMounted(true); }, []);
 
@@ -80,21 +91,109 @@ export function LeaveRequestModal({ isOpen, onClose, onSubmit }: Props) {
                 </div>
 
                 <div className="space-y-4">
-                    {/* Dokter */}
+                    {/* Dokter - Combobox modern */}
                     <div>
                         <label className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block mb-2">
                             Nama Dokter
                         </label>
-                        <select
-                            className="w-full bg-slate-50 rounded-2xl px-4 py-3 text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:bg-white transition-all"
-                            value={form.doctor}
-                            onChange={e => setForm({ ...form, doctor: e.target.value })}
-                        >
-                            <option value="" disabled>Pilih dokter...</option>
-                            {doctors.map(doc => (
-                                <option key={doc.id} value={doc.name}>{doc.name}</option>
-                            ))}
-                        </select>
+                        <div className="relative">
+                            <button
+                                type="button"
+                                className="w-full bg-slate-50 rounded-2xl px-4 py-3 text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:bg-white transition-all flex items-center justify-between"
+                                aria-haspopup="listbox"
+                                aria-expanded={isDoctorListOpen}
+                                onClick={() => {
+                                    setIsDoctorListOpen((prev) => !prev);
+                                    setTimeout(() => {
+                                        setHighlightedIndex(0);
+                                    }, 0);
+                                }}
+                                onKeyDown={(e) => {
+                                    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+                                        e.preventDefault();
+                                        if (!isDoctorListOpen) {
+                                            setIsDoctorListOpen(true);
+                                            setHighlightedIndex(0);
+                                        }
+                                    }
+                                }}
+                            >
+                                <span className={form.doctor ? "truncate text-slate-800" : "text-slate-400"}>
+                                    {form.doctor || "Pilih dokter..."}
+                                </span>
+                                <Search className="h-4 w-4 text-slate-400 ml-2 flex-shrink-0" />
+                            </button>
+
+                            {isDoctorListOpen && (
+                                <div className="absolute z-50 mt-1 w-full rounded-2xl bg-white shadow-xl border border-slate-100 max-h-56 overflow-y-auto py-1">
+                                    <div className="px-3 pb-2 pt-1 border-b border-slate-100 sticky top-0 bg-white">
+                                        <div className="relative">
+                                            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400" />
+                                            <input
+                                                autoFocus
+                                                type="text"
+                                                placeholder="Ketik nama atau spesialisasi..."
+                                                className="w-full bg-slate-50 rounded-xl pl-8 pr-3 py-2 text-xs font-medium text-slate-700 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:bg-white transition-all placeholder:text-slate-300"
+                                                value={doctorSearch}
+                                                onChange={(e) => {
+                                                    setDoctorSearch(e.target.value);
+                                                    setHighlightedIndex(0);
+                                                }}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === "ArrowDown") {
+                                                        e.preventDefault();
+                                                        setHighlightedIndex((prev) =>
+                                                            prev < filteredDoctors.length - 1 ? prev + 1 : prev
+                                                        );
+                                                    } else if (e.key === "ArrowUp") {
+                                                        e.preventDefault();
+                                                        setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : 0));
+                                                    } else if (e.key === "Enter") {
+                                                        e.preventDefault();
+                                                        const doc = filteredDoctors[highlightedIndex];
+                                                        if (doc) {
+                                                            setForm({ ...form, doctor: doc.name });
+                                                            setIsDoctorListOpen(false);
+                                                        }
+                                                    } else if (e.key === "Escape") {
+                                                        e.preventDefault();
+                                                        setIsDoctorListOpen(false);
+                                                    }
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                    <ul role="listbox" className="py-1">
+                                        {filteredDoctors.length === 0 ? (
+                                            <li className="px-4 py-2 text-[11px] text-slate-400">
+                                                Tidak ada dokter ditemukan
+                                            </li>
+                                        ) : (
+                                            filteredDoctors.map((doc, index) => (
+                                                <li
+                                                    key={doc.id}
+                                                    role="option"
+                                                    aria-selected={form.doctor === doc.name}
+                                                    className={`px-4 py-2 text-xs cursor-pointer flex items-center justify-between ${
+                                                        index === highlightedIndex
+                                                            ? "bg-emerald-50 text-emerald-700"
+                                                            : "hover:bg-slate-50 text-slate-700"
+                                                    }`}
+                                                    onMouseEnter={() => setHighlightedIndex(index)}
+                                                    onMouseDown={(e) => {
+                                                        e.preventDefault();
+                                                        setForm({ ...form, doctor: doc.name });
+                                                        setIsDoctorListOpen(false);
+                                                    }}
+                                                >
+                                                    <span className="truncate">{doc.name}</span>
+                                                </li>
+                                            ))
+                                        )}
+                                    </ul>
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Tipe */}
