@@ -1,0 +1,49 @@
+version: '3'
+services:
+  medcore-app:
+    image: admin-dashboard-medcore-app:latest
+    container_name: medcore-admin-backup
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      - medcore_data:/app/src/data
+    environment:
+      - NODE_ENV=production
+    x-casaos:
+      envs:
+        - container: NODE_ENV
+          description:
+            en_us: Environment mode (production/development)
+      hostname: ""
+      icon: https://cdn.jsdelivr.net/gh/WalkXCode/Dashboard-Icons@master/png/nextjs.png
+      index: /
+      main: medcore-app
+      port_map: "3000"
+      scheme: http
+      title:
+        en_us: MedCore Admin
+        id_id: MedCore Admin (Backup)
+
+volumes:
+  medcore_data:
+    name: admin-dashboard_medcore_data
+
+x-casaos:
+  architectures:
+    - amd64
+    - arm64
+  author: Fallonava
+  category: Medical
+  description:
+    en_us: Admin Dashboard for MedCore (Home Server Backup)
+    id_id: Dashboard Admin untuk MedCore (Backup Home Server)
+  developer: Fallonava
+  icon: https://cdn.jsdelivr.net/gh/WalkXCode/Dashboard-Icons@master/png/nextjs.png
+  main: medcore-app
+  port_map: "3000"
+  scheme: http
+  store_app_id: medcore-admin
+  title:
+    en_us: MedCore Admin
+    id_id: MedCore Admin (Backup)
