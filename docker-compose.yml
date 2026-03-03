@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  # Satu container saja (Aplikasi + Database JSON internal)
+  medcore-app:
+    build: .
+    container_name: medcore-admin-backup
+    restart: always
+    ports:
+      - "3000:3000"
+    volumes:
+      # Sangat Penting: Agar data tidak hilang saat container mati/update
+      - medcore_data:/app/src/data
+    environment:
+      - NODE_ENV=production
+
+volumes:
+  medcore_data:

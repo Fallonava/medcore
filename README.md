@@ -79,4 +79,38 @@ ssh -i "hospital-api.pem" ubuntu@16.79.196.134
 
 ---
 
-*Dokumen ini menggantikan README.md, TESTING.md, dan PRODUCTION_READINESS.md lama agar lebih ringkas.*
+## 🏠 Backup ke Home Server (CasaOS + GitHub Sync)
+
+Ikuti langkah ini agar home server kamu bisa otomatis tarik kode dari GitHub:
+
+### Langkah 1: Setup SSH di Home Server (Hanya Sekali)
+
+1. Masuk ke SSH home server kamu.
+2. Buat kunci SSH: `ssh-keygen -t ed25519 -C "home-server-medcore"`.
+3. Tampilkan public key: `cat ~/.ssh/id_ed25519.pub`.
+4. **Copy & Paste** hasilnya ke akun GitHub kamu (Settings -> SSH Keys).
+
+### Langkah 2: Hubungkan Project ke GitHub
+
+Di terminal home server, masuk ke folder project dan jalankan:
+
+```bash
+git init
+git remote add origin git@github.com:Fallonava/admin-dashboard.git
+git fetch origin
+git checkout -f master
+```
+
+### Langkah 3: Cara Update/Sinkronisasi
+
+Tiap kali ada perubahan di GitHub, kamu cukup jalankan satu perintah di home server:
+
+```bash
+bash scripts/sync-home.sh
+```
+
+*Script ini akan otomatis melakukan git pull dan membangun ulang (rebuild) container Docker kamu.*
+
+---
+
+*Dokumen ini menggantikan README.md lama agar lebih ringkas dan praktis.*
