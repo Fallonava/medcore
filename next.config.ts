@@ -3,6 +3,9 @@ import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  experimental: {
+    serverExternalPackages: ['ioredis', 'bullmq', 'bcryptjs'],
+  },
 
   async headers() {
     return [
