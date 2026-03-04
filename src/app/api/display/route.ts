@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requirePermission } from '@/lib/api-utils';
 import { Doctor } from '@/lib/data-service'; // Only using for type if needed
 import { revalidatePath } from 'next/cache';
 
@@ -88,9 +89,12 @@ export async function GET() {
     });
 }
 
-export async function POST(request: Request) {
+export async function POST(req: Request) {
     try {
-        const body = await request.json();
+        const authErr = await requirePermission(req, 'display-control', 'write');
+        if (authErr) return authErr;
+
+        const body = await req.json();
 
         // Used by Display Control Page to force save state
         if (body.doctors) {

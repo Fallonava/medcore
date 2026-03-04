@@ -14,6 +14,7 @@ import { Sidebar } from "@/components/Sidebar";
 
 import { SWRProvider } from "@/components/swr-provider";
 import { AutomationRunner } from "@/components/AutomationRunner";
+import { AuthProvider } from "@/lib/auth-context";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -48,6 +49,7 @@ export default function RootLayout({
       </head>
       <body className={inter.className} suppressHydrationWarning>
         <SWRProvider>
+          <AuthProvider>
           <AutomationRunner />
           <div className="flex h-screen bg-background overflow-hidden relative">
             <Sidebar />
@@ -55,6 +57,7 @@ export default function RootLayout({
               {children}
             </main>
           </div>
+          </AuthProvider>
         </SWRProvider>
       </body>
     </html>

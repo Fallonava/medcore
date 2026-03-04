@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requirePermission } from '@/lib/api-utils';
 import { z } from 'zod';
-import { requireAdmin } from '@/lib/api-utils';
 
 // Validation schemas
 const ConditionSchema = z.object({
@@ -28,7 +28,7 @@ const UpdateRuleSchema = CreateRuleSchema.extend({
 });
 
 export async function GET(req: Request) {
-    const authErr = await requireAdmin(req);
+    const authErr = await requirePermission(req, 'automation', 'read');
     if (authErr) return authErr;
 
     if (!(prisma as any).automationRule) return NextResponse.json([]);
@@ -37,7 +37,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-    const authErr = await requireAdmin(req);
+    const authErr = await requirePermission(req, 'automation', 'write');
     if (authErr) return authErr;
 
     try {
@@ -59,7 +59,7 @@ export async function POST(req: Request) {
 }
 
 export async function PUT(req: Request) {
-    const authErr = await requireAdmin(req);
+    const authErr = await requirePermission(req, 'automation', 'write');
     if (authErr) return authErr;
 
     try {
@@ -85,7 +85,7 @@ export async function PUT(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-    const authErr = await requireAdmin(req);
+    const authErr = await requirePermission(req, 'automation', 'write');
     if (authErr) return authErr;
 
     const { searchParams } = new URL(req.url);

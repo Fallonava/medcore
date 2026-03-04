@@ -1,38 +1,30 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Activity, Lock, ArrowRight, ShieldCheck, AlertCircle, Sparkles } from "lucide-react";
+import { useState } from "react";
+import { Activity, Lock, User, ArrowRight, ShieldCheck, AlertCircle, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth-context";
 
 export default function LoginPage() {
+    const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
-    const router = useRouter();
+    const { login } = useAuth();
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!password) return;
+        if (!username || !password) return;
 
         setLoading(true);
         setError("");
 
         try {
-            const res = await fetch("/api/auth/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ password }),
-            });
-
-            if (res.ok) {
-                router.push("/");
-                router.refresh();
-            } else {
-                const data = await res.json();
-                setError(data.error || "Kata sandi salah. Silakan coba lagi.");
+            const result = await login(username, password);
+            if (!result.success) {
+                setError(result.error || "Username atau password salah.");
             }
-        } catch (err) {
+        } catch {
             setError("Terjadi kesalahan jaringan. Periksa koneksi Anda.");
         } finally {
             setLoading(false);
@@ -46,7 +38,7 @@ export default function LoginPage() {
             <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-indigo-400/10 rounded-full blur-[100px] pointer-events-none -translate-x-1/3 translate-y-1/3" />
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-sky-200/20 rounded-full blur-[120px] pointer-events-none" />
 
-            {/* Mesh grid overlay - adapt grid to light mode */}
+            {/* Mesh grid overlay */}
             <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.03)_1px,transparent_1px)] bg-[size:64px_64px] [mask-image:radial-gradient(ellipse_at_center,black_20%,transparent_70%)] pointer-events-none" />
 
             {/* ── LOGIN CARD ── */}
@@ -65,9 +57,29 @@ export default function LoginPage() {
                         </p>
                     </div>
 
-                    <form onSubmit={handleLogin} className="space-y-6">
+                    <form onSubmit={handleLogin} className="space-y-4">
+                        {/* Username Field */}
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-600 uppercase tracking-wider ml-1">Kredensial Akses</label>
+                            <label className="text-xs font-bold text-slate-600 uppercase tracking-wider ml-1">Username</label>
+                            <div className="relative group">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-600 transition-colors">
+                                    <User size={18} strokeWidth={2.5} />
+                                </div>
+                                <input
+                                    type="text"
+                                    value={username}
+                                    onChange={(e) => setUsername(e.target.value)}
+                                    placeholder="Masukkan username..."
+                                    className="w-full pl-11 pr-4 py-4 bg-white border border-slate-200 rounded-2xl text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-semibold shadow-sm"
+                                    disabled={loading}
+                                    autoComplete="username"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Password Field */}
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-600 uppercase tracking-wider ml-1">Password</label>
                             <div className="relative group">
                                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-blue-600 transition-colors">
                                     <Lock size={18} strokeWidth={2.5} />
@@ -76,9 +88,10 @@ export default function LoginPage() {
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    placeholder="Masukkan kata sandi master..."
+                                    placeholder="Masukkan password..."
                                     className="w-full pl-11 pr-4 py-4 bg-white border border-slate-200 rounded-2xl text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all font-semibold shadow-sm"
                                     disabled={loading}
+                                    autoComplete="current-password"
                                 />
                             </div>
 
@@ -96,7 +109,7 @@ export default function LoginPage() {
 
                         <button
                             type="submit"
-                            disabled={loading || !password}
+                            disabled={loading || !username || !password}
                             className="group relative w-full flex justify-center py-4 px-4 text-sm font-bold rounded-2xl text-white bg-slate-900 hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-900/10 transition-all overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_8px_20px_rgba(0,0,0,0.08)] active:scale-[0.98]"
                         >
                             {/* Hover highlight */}
@@ -111,7 +124,7 @@ export default function LoginPage() {
                                 ) : (
                                     <>
                                         <ShieldCheck size={18} className="text-slate-400 group-hover:text-blue-200 transition-colors" />
-                                        <span>Otentikasi & Masuk</span>
+                                        <span>Masuk</span>
                                         <ArrowRight size={18} className="translate-x-0 group-hover:translate-x-1 opacity-50 group-hover:opacity-100 transition-all" />
                                     </>
                                 )}

@@ -1,0 +1,35 @@
+--- Restoring Super Admin Access ---
+Error restoring access: PrismaClientKnownRequestError: 
+Invalid `prisma.role.findUnique()` invocation in
+F:\Next\admin-dashboard\src\scripts\restore-admin.ts:13:32
+
+  10 console.log('--- Restoring Super Admin Access ---');
+  11 
+  12 // 1. Ensure Super Admin Role exists
+ÔåÆ 13 let role = await prisma.role.findUnique(
+Can't reach database server at base
+    at zr.handleRequestError (F:\Next\admin-dashboard\node_modules\@prisma\client\src\runtime\RequestHandler.ts:237:13)
+    at zr.handleAndLogRequestError (F:\Next\admin-dashboard\node_modules\@prisma\client\src\runtime\RequestHandler.ts:183:12)
+    at zr.request (F:\Next\admin-dashboard\node_modules\@prisma\client\src\runtime\RequestHandler.ts:152:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async a (F:\Next\admin-dashboard\node_modules\@prisma\client\src\runtime\getPrismaClient.ts:808:24)
+    at async main (F:\Next\admin-dashboard\src\scripts\restore-admin.ts:13:14) {
+  code: 'P1001',
+  meta: {
+    modelName: 'Role',
+    driverAdapterError: DriverAdapterError: DatabaseNotReachable
+        at PrismaPgAdapter.onError (F:\Next\admin-dashboard\node_modules\@prisma\adapter-pg\dist\index.js:687:11)
+        at PrismaPgAdapter.performIO (F:\Next\admin-dashboard\node_modules\@prisma\adapter-pg\dist\index.js:682:12)
+        at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at async PrismaPgAdapter.queryRaw (F:\Next\admin-dashboard\node_modules\@prisma\adapter-pg\dist\index.js:602:30)
+        at async e.interpretNode (F:\Next\admin-dashboard\node_modules\@prisma\client-engine-runtime\src\interpreter\query-interpreter.ts:182:26)
+        at async e.interpretNode (F:\Next\admin-dashboard\node_modules\@prisma\client-engine-runtime\src\interpreter\query-interpreter.ts:209:41)
+        at async e.interpretNode (F:\Next\admin-dashboard\node_modules\@prisma\client-engine-runtime\src\interpreter\query-interpreter.ts:124:29)
+        at async e.interpretNode (F:\Next\admin-dashboard\node_modules\@prisma\client-engine-runtime\src\interpreter\query-interpreter.ts:268:41)
+        at async e.run (F:\Next\admin-dashboard\node_modules\@prisma\client-engine-runtime\src\interpreter\query-interpreter.ts:93:23)
+        at async e.execute (F:\Next\admin-dashboard\node_modules\@prisma\client\src\runtime\core\engines\client\LocalExecutor.ts:81:12) {
+      cause: [Object]
+    }
+  },
+  clientVersion: '7.4.1'
+}

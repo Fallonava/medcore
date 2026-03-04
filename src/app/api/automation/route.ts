@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requirePermission } from '@/lib/api-utils';
 
 export async function GET() {
     const rules = await prisma.broadcastRule.findMany();
@@ -16,6 +17,9 @@ const parseTargetZone = (zone: string) => {
 };
 
 export async function POST(req: Request) {
+    const authErr = await requirePermission(req, 'automation', 'write');
+    if (authErr) return authErr;
+
     const body = await req.json();
     if (body.targetZone) body.targetZone = parseTargetZone(body.targetZone);
     const newItem = await prisma.broadcastRule.create({ data: body });
@@ -23,6 +27,9 @@ export async function POST(req: Request) {
 }
 
 export async function PUT(req: Request) {
+    const authErr = await requirePermission(req, 'automation', 'write');
+    if (authErr) return authErr;
+
     const body = await req.json();
     const { id, ...updates } = body;
     if (updates.targetZone) updates.targetZone = parseTargetZone(updates.targetZone);
@@ -35,6 +42,9 @@ export async function PUT(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+    const authErr = await requirePermission(req, 'automation', 'write');
+    if (authErr) return authErr;
+
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });

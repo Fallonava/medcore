@@ -52,9 +52,12 @@ model Doctor {
   lastCall           String? // Format: HH:MM
   registrationTime   String? // Format: HH:MM
   lastManualOverride BigInt? // UNIX timestamp
+  deletedAt          DateTime?
 
   shifts        Shift[]
   leaveRequests LeaveRequest[]
+
+  @@index([deletedAt])
 }
 
 model Shift {
@@ -71,6 +74,10 @@ model Shift {
 
   doctorId String
   doctor   Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  deletedAt DateTime?
+
+  @@index([doctorId])
+  @@index([dayIdx, doctorId])
 }
 
 model LeaveRequest {
@@ -85,6 +92,9 @@ model LeaveRequest {
 
   doctorId String
   doctor   Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@index([doctorId])
+  @@index([startDate, endDate])
 }
 
 model BroadcastRule {
@@ -119,4 +129,76 @@ model Settings {
   runTextMessage    String?
   emergencyMode     Boolean? @default(false)
   customMessages    Json?
+}
+
+// ==================== RBAC ====================
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String   // bcrypt hashed
+  name      String
+  isActive  Boolean  @default(true)
+
+  roleId    String?
+  role      Role?    @relation(fields: [roleId], references: [id], onDelete: SetNull)
+
+  refreshTokens RefreshToken[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+  lastLogin DateTime?
+}
+
+model Role {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  isSystem    Boolean  @default(false)
+
+  users       User[]
+  permissions RolePermission[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model RolePermission {
+  id       String @id @default(cuid())
+  resource String // e.g. "doctors", "shifts", "analytics", "users"
+  action   String // "read" or "write"
+
+  roleId String
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, resource, action])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?  // The user who performed the action (nullable for system)
+  action    String
+  resource  String?
+  details   Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  token     String   @unique  // hashed token stored, raw token sent to client
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revokedAt DateTime?          // null = active, set = revoked
+  userAgent String?
+  ipAddress String?
+
+  @@index([userId])
+  @@index([token])
 }

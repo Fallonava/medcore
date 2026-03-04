@@ -1,104 +1,131 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { EventEmitter } from 'events';
+import { automationBroadcaster } from '@/lib/automation-broadcaster';
 
 export const runtime = 'nodejs';
 
-// Global cache and emitter for all connected SSE clients
-const streamEmitter = new EventEmitter();
-streamEmitter.setMaxListeners(0); // Allow unlimited clients
+// ─── Data fetchers per domain ────────────────────────────────────────────────
 
-let isPolling = false;
-let lastDataStr = '';
-
-// Central polling loop: Queries DB once every 5s and fans out to all clients
-async function startPolling() {
-    if (isPolling) return;
-    isPolling = true;
-    
-    // Initial fetch
-    await fetchAndBroadcast();
-
-    setInterval(async () => {
-        await fetchAndBroadcast();
-    }, 5000); // Poll every 5 seconds
+async function fetchDoctors() {
+    const doctors = await prisma.doctor.findMany({ orderBy: { name: 'asc' } });
+    return doctors.map(d => ({
+        ...d,
+        lastManualOverride: d.lastManualOverride ? d.lastManualOverride.toString() : null,
+    }));
 }
 
-async function fetchAndBroadcast() {
-    try {
-        const [doctors, shifts, leaves, settings] = await Promise.all([
-            prisma.doctor.findMany({ orderBy: { name: 'asc' } }),
-            prisma.shift.findMany(),
-            prisma.leaveRequest.findMany(),
-            prisma.settings.findFirst()
-        ]);
-        
-        const data = { 
-            doctors, 
-            shifts, 
-            leaves, 
-            settings: settings || { automationEnabled: false } 
-        };
-        const dataStr = JSON.stringify(data, (_, v) => typeof v === 'bigint' ? v.toString() : v);        
-        // Only broadcast if data actually changed to save bandwidth
-        if (dataStr !== lastDataStr) {
-            lastDataStr = dataStr;
-            streamEmitter.emit('update', dataStr);
-        }
-    } catch (error) {
-        console.error('SSE central polling error:', error);
-    }
+async function fetchShifts() {
+    return prisma.shift.findMany();
 }
+
+async function fetchLeaves() {
+    return prisma.leaveRequest.findMany();
+}
+
+async function fetchSettings() {
+    const s = await prisma.settings.findFirst();
+    return s || { automationEnabled: false };
+}
+
+// Helper: format a named SSE event
+// `event: <name>\ndata: <json>\n\n`
+function formatEvent(name: string, data: unknown): string {
+    const json = JSON.stringify(data, (_, v) =>
+        typeof v === 'bigint' ? v.toString() : v
+    );
+    return `event: ${name}\ndata: ${json}\n\n`;
+}
+
+// ─── GET handler ─────────────────────────────────────────────────────────────
 
 export async function GET(req: Request) {
-    startPolling();
-
     const headers = new Headers({
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache, no-transform',
         'Connection': 'keep-alive',
+        'X-Accel-Buffering': 'no', // disable nginx buffering for SSE
     });
 
     const stream = new ReadableStream({
         async start(controller) {
-            const send = (dataStr: string) => {
+            const encoder = new TextEncoder();
+            let closed = false;
+
+            const send = (chunk: string) => {
+                if (closed) return;
                 try {
-                    controller.enqueue(`data: ${dataStr}\n\n`);
-                } catch (e) {
-                    // Stream closed
+                    controller.enqueue(encoder.encode(chunk));
+                } catch {
+                    closed = true;
                 }
             };
 
-            // 1. Send immediate initial state to the new client
-            if (lastDataStr) {
-                 send(lastDataStr);
+            // ── 1. Initial snapshot: send all domains as named events ──
+            try {
+                const [doctors, shifts, leaves, settings] = await Promise.all([
+                    fetchDoctors(),
+                    fetchShifts(),
+                    fetchLeaves(),
+                    fetchSettings(),
+                ]);
+                send(formatEvent('doctors', doctors));
+                send(formatEvent('shifts', shifts));
+                send(formatEvent('leaves', leaves));
+                send(formatEvent('settings', settings));
+            } catch (err) {
+                console.error('[SSE] initial fetch error:', err);
             }
 
-            // 2. Subscribe to future broadcast updates
-            const listener = (dataStr: string) => send(dataStr);
-            streamEmitter.on('update', listener);
-
-            // 3. Keep-alive ping to prevent connection timeout (essential for AWS/Nginx)
-            let isClosed = false;
-            const iv = setInterval(() => {
-                if (!isClosed) {
-                    try {
-                        controller.enqueue(': ping\n\n');
-                    } catch (e) {
-                        isClosed = true;
-                        clearInterval(iv);
-                    }
+            // ── 2. Doctor update listener (triggered by automation/manual updates) ──
+            const onDoctorUpdate = async () => {
+                try {
+                    const doctors = await fetchDoctors();
+                    send(formatEvent('doctors', doctors));
+                } catch (err) {
+                    console.error('[SSE] doctor update error:', err);
                 }
-            }, 25000);
-
-            // 4. Cleanup on disconnect
-            (controller as any).oncancel = () => {
-                isClosed = true;
-                clearInterval(iv);
-                streamEmitter.off('update', listener);
             };
-        }
+
+            // ── 3. Settings update listener ──
+            const onSettingsUpdate = async () => {
+                try {
+                    const settings = await fetchSettings();
+                    send(formatEvent('settings', settings));
+                } catch (err) {
+                    console.error('[SSE] settings update error:', err);
+                }
+            };
+
+            // ── 4. Shift update listener ──
+            const onShiftUpdate = async () => {
+                try {
+                    const shifts = await fetchShifts();
+                    send(formatEvent('shifts', shifts));
+                } catch (err) {
+                    console.error('[SSE] shift update error:', err);
+                }
+            };
+
+            automationBroadcaster.on('doctors', onDoctorUpdate);
+            automationBroadcaster.on('settings', onSettingsUpdate);
+            automationBroadcaster.on('shifts', onShiftUpdate);
+
+            // ── 5. Heartbeat every 25s (keeps connection through proxies) ──
+            const hb = setInterval(() => {
+                send(': heartbeat\n\n');
+            }, 25_000);
+
+            // ── 6. Cleanup on client disconnect ──
+            req.signal.addEventListener('abort', () => {
+                closed = true;
+                automationBroadcaster.off('doctors', onDoctorUpdate);
+                automationBroadcaster.off('settings', onSettingsUpdate);
+                automationBroadcaster.off('shifts', onShiftUpdate);
+                clearInterval(hb);
+                try { controller.close(); } catch { /* already closed */ }
+            });
+        },
     });
 
-    return new NextResponse(stream, { headers });
+    return new Response(stream, { headers });
 }

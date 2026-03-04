@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { requirePermission } from '@/lib/api-utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,6 +18,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+    const authErr = await requirePermission(req, 'schedules', 'write');
+    if (authErr) return authErr;
+
     try {
         const body = await req.json();
         const { doctor, ...data } = body;
@@ -38,6 +42,9 @@ export async function POST(req: Request) {
 }
 
 export async function PUT(req: Request) {
+    const authErr = await requirePermission(req, 'schedules', 'write');
+    if (authErr) return authErr;
+
     try {
         const body = await req.json();
         const { id, doctor, ...updates } = body;
@@ -54,6 +61,9 @@ export async function PUT(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+    const authErr = await requirePermission(req, 'schedules', 'write');
+    if (authErr) return authErr;
+
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
     if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });

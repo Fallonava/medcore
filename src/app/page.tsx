@@ -1,14 +1,15 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-// Removed unused SWR import
-import { Activity, Users, MonitorPlay, AlertCircle, Search, Filter, Zap, Power, Clock, TrendingUp, BarChart3, CalendarCheck, BriefcaseMedical, FileClock, CheckCircle2 } from "lucide-react";
+import { Activity, Users, MonitorPlay, AlertCircle, Search, Filter, Zap, Power, Clock, TrendingUp, BarChart3, CalendarCheck, BriefcaseMedical, FileClock, CheckCircle2, Wifi, WifiOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Doctor, LeaveRequest, Shift, Settings } from "@/lib/data-service";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LiveClock } from "@/components/LiveClock";
 import { useDebounce } from "@/hooks/use-debounce";
+import { useSSE } from "@/hooks/use-sse";
 import { useRouter } from "next/navigation";
+import { Skeleton, DoctorCardSkeleton, StatsSkeleton } from "@/components/ui/Skeleton";
 
 export default function Home() {
   const router = useRouter();
@@ -24,19 +25,16 @@ export default function Home() {
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [settings, setSettings] = useState<Settings | null>(null);
 
-  useEffect(() => {
-    const es = new EventSource('/api/stream/live');
-    es.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.doctors) setDoctors(data.doctors);
-        if (data.shifts) setShifts(data.shifts);
-        if (data.leaves) setLeaves(data.leaves);
-        if (data.settings) setSettings(data.settings);
-      } catch (err) {}
-    };
-    return () => es.close();
-  }, []);
+  // ── ONE SSE connection, per-event handlers ──────────────────────────────
+  const sseStatus = useSSE({
+    url: '/api/stream/live',
+    handlers: {
+      doctors: (data: Doctor[]) => Array.isArray(data) && setDoctors(data),
+      shifts:  (data: Shift[])  => Array.isArray(data) && setShifts(data),
+      leaves:  (data: LeaveRequest[]) => Array.isArray(data) && setLeaves(data),
+      settings: (data: Settings) => data && setSettings(data),
+    },
+  });
 
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 200);
@@ -176,9 +174,27 @@ export default function Home() {
   const greeting = hour < 11 ? "Selamat Pagi" : hour < 15 ? "Selamat Siang" : hour < 18 ? "Selamat Sore" : "Selamat Malam";
 
   if (!mounted) return (
-      <div className="w-full h-full flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-slate-900"></div>
-      </div>
+    <div className="w-full h-full px-3 lg:px-6 flex flex-col overflow-hidden animate-pulse">
+        <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between pt-4 mb-4 lg:mb-5 gap-3">
+            <div className="flex items-center gap-3">
+                <Skeleton className="w-10 h-10 rounded-2xl" />
+                <div className="space-y-2">
+                    <Skeleton className="h-6 w-32" />
+                    <Skeleton className="h-3 w-48" />
+                </div>
+            </div>
+            <div className="flex gap-2">
+                <Skeleton className="h-10 w-32 rounded-2xl" />
+                <Skeleton className="h-10 w-48 rounded-2xl" />
+            </div>
+        </header>
+        <div className="space-y-6">
+            <StatsSkeleton />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {[1,2,3,4,5,6,7,8].map(i => <DoctorCardSkeleton key={i} />)}
+            </div>
+        </div>
+    </div>
   );
 
   return (
@@ -209,6 +225,23 @@ export default function Home() {
         <div className="flex items-center gap-2 lg:gap-4 flex-wrap">
           {/* Live Clock Widget */}
           <LiveClock />
+
+          {/* Live Connection Status */}
+          <div className={cn(
+            "px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all border",
+            sseStatus === 'connected'
+              ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+              : sseStatus === 'reconnecting'
+                ? "bg-amber-50 text-amber-600 border-amber-100 animate-pulse"
+                : "bg-slate-50 text-slate-500 border-slate-100"
+          )}>
+            {sseStatus === 'connected'
+              ? <Wifi size={12} strokeWidth={2.5} />
+              : <WifiOff size={12} strokeWidth={2.5} />}
+            {sseStatus === 'connected' ? 'Live'
+              : sseStatus === 'reconnecting' ? 'Reconnecting...'
+                : 'Connecting...'}
+          </div>
 
           {/* Automation Control */}
           <button

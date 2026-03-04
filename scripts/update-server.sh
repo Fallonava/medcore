@@ -10,14 +10,15 @@ echo "🚀 Memulai proses update MedCore Admin..."
 # 1. Pull perubahan terbaru dari Git (jika ada Git)
 if [ -d ".git" ]; then
     echo "📥 Menarik kode terbaru dari Git..."
-    git pull origin master
+    BRANCH=$(git symbolic-ref --short HEAD 2>/dev/null || echo "main")
+    git pull origin "$BRANCH"
 else
     echo "⚠️ Folder .git tidak ditemukan. Pastikan file terbaru sudah ada di folder ini."
 fi
 
-# 2. Install dependencies (hanya jika package.json berubah)
+# 2. Install dependencies (ci = reproducible, omit dev deps in production)
 echo "📦 Menginstall dependencies..."
-npm install
+npm ci
 
 # 3. Build aplikasi
 echo "🏗️ Membangun (Build) aplikasi (standalone)..."
@@ -29,9 +30,10 @@ echo "📂 Menyusun aset statis..."
 cp -r .next/static .next/standalone/.next/static
 cp -r public .next/standalone/public
 
-# 5. Database migration (Opsional - aktifkan jika pakai Prisma Migrations)
-# echo "🗄️ Menjalankan migrasi database..."
-# npx prisma migrate deploy
+# 5. Database migration — uses DIRECT_URL to bypass connection pooler
+echo "🗄️ Menjalankan migrasi database..."
+# DIRECT_URL must be set in /etc/environment or .env.production.local on the server
+DIRECT_URL="${DIRECT_URL:-$DATABASE_URL}" DATABASE_URL="${DIRECT_URL:-$DATABASE_URL}" npx prisma migrate deploy
 
 # 6. Restart PM2 (Zero-downtime)
 echo "🔄 Merestart aplikasi di PM2..."

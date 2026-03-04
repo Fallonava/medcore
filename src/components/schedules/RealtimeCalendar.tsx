@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Fragment } from "react";
+import { useState, Fragment, useEffect } from "react";
 import useSWR, { mutate } from "swr";
 import { ChevronLeft, ChevronRight, Plus, X, Clock, User } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -38,8 +38,35 @@ interface RealtimeCalendarProps {
 }
 
 export function RealtimeCalendar({ selectedDate, onDateChange }: RealtimeCalendarProps) {
-    const { data: shifts = [] } = useSWR<Shift[]>('/api/shifts', { refreshInterval: 10000 });
-    const { data: doctors = [] } = useSWR<Doctor[]>('/api/doctors', { refreshInterval: 10000 });
+    const { data: shifts = [] } = useSWR<Shift[]>('/api/shifts');
+    const { data: doctors = [] } = useSWR<Doctor[]>('/api/doctors');
+
+    // ─── Real-time Updates via SSE ───
+    useEffect(() => {
+        const eventSource = new EventSource('/api/realtime/doctors');
+
+        eventSource.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                console.log('[SSE] Received doctor updates:', data);
+                // Trigger SWR mutation to re-fetch data
+                mutate('/api/doctors');
+                mutate('/api/shifts');
+            } catch (err) {
+                console.error('[SSE] Failed to parse message:', err);
+            }
+        };
+
+        eventSource.onerror = (err) => {
+            console.error('[SSE] EventSource failed:', err);
+            eventSource.close();
+        };
+
+        return () => {
+            eventSource.close();
+        };
+    }, []);
+
     const [showAddModal, setShowAddModal] = useState(false);
     const [newShift, setNewShift] = useState({
         doctor: "",
@@ -144,7 +171,7 @@ export function RealtimeCalendar({ selectedDate, onDateChange }: RealtimeCalenda
                             );
 
                             return (
-                                <div key={`h-${hIdx}`} className="grid grid-cols-[80px_1fr]-200/50 last:border-b-0 min-h-[72px] group/row hover:bg-white/40 transition-colors relative">
+                                <div key={`h-${hIdx}`} className="grid grid-cols-[80px_1fr] border-b border-slate-200/50 last:border-b-0 min-h-[72px] group/row hover:bg-white/40 transition-colors relative">
 
                                     {/* Time label */}
                                     <div className="p-4 text-right bg-white/40 flex flex-col items-end backdrop-blur-md border-r border-white/50">
@@ -153,7 +180,7 @@ export function RealtimeCalendar({ selectedDate, onDateChange }: RealtimeCalenda
 
                                     {/* Timeline content */}
                                     <div className="p-2.5 relative">
-                                        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2-200/50 pointer-events-none" />
+                                        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 border-t border-slate-200/50 pointer-events-none" />
 
                                         <div className="flex flex-wrap gap-2.5 relative z-10">
                                             {cellShifts.map((shift, sIdx) => {
@@ -180,7 +207,7 @@ export function RealtimeCalendar({ selectedDate, onDateChange }: RealtimeCalenda
                                                             </button>
                                                         </div>
 
-                                                        <div className={cn("flex flex-col gap-2 pl-4-2 ml-1", color.border)}>
+                                                        <div className={cn("flex flex-col gap-2 pl-2 border-l-2 ml-1", color.border)}>
                                                             <p className={cn("text-[10px] font-extrabold uppercase tracking-widest", color.text)}>{shift.title}</p>
 
                                                             <div className="flex items-center justify-between mt-0.5">
@@ -302,7 +329,7 @@ export function RealtimeCalendar({ selectedDate, onDateChange }: RealtimeCalenda
                             <div className="pt-4 flex gap-3">
                                 <button
                                     onClick={() => setShowAddModal(false)}
-                                    className="flex-1 py-3 rounded-2xl border-200 text-foreground text-sm font-bold hover:bg-slate-50 hover:shadow-[0_4px_14px_0_rgba(0,0,0,0.02)] transition-all"
+                                    className="flex-1 py-3 rounded-2xl border border-slate-200 text-foreground text-sm font-bold hover:bg-slate-50 hover:shadow-[0_4px_14px_0_rgba(0,0,0,0.02)] transition-all"
                                 >
                                     Cancel
                                 </button>

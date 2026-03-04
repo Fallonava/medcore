@@ -305,11 +305,12 @@ export async function runAutomation(): Promise<{ applied: number, failed: number
                         }
 
                         // Fallback to bulk API endpoint
-                        const fallbackRes = await fetch('http://localhost:3000/api/doctors?action=bulk', {
+                        const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000';
+                        const fallbackRes = await fetch(`${appUrl}/api/doctors?action=bulk`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
-                                'Cookie': `medcore_session=${process.env.ADMIN_KEY}`
+                                'Authorization': `Bearer ${process.env.ADMIN_KEY}`
                             },
                             body: JSON.stringify(updates)
                         });

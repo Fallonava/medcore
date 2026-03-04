@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   Calendar,
@@ -16,28 +16,37 @@ import {
   Tv,
   Menu,
   X,
-  Zap
+  Zap,
+  Shield,
+  LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth-context";
 
 const navigation = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Jadwal", href: "/schedules", icon: Calendar },
-  { name: "Dokter", href: "/doctors", icon: Users },
-  { name: "Jadwal Cuti", href: "/leaves", icon: Calendar },
-  { name: "Analitik", href: "/analytics", icon: BarChart3 },
+  { name: "Dashboard", href: "/", icon: LayoutDashboard, resource: "dashboard" },
+  { name: "Jadwal", href: "/schedules", icon: Calendar, resource: "schedules" },
+  { name: "Dokter", href: "/doctors", icon: Users, resource: "doctors" },
+  { name: "Jadwal Cuti", href: "/leaves", icon: Calendar, resource: "leaves" },
+  { name: "Analitik", href: "/analytics", icon: BarChart3, resource: "analytics" },
 ];
 
 const systems = [
-  { name: "Otomatisasi", href: "/automation", icon: Bot },
-  { name: "Monitor Queue", href: "/automation/queue-monitor", icon: Zap },
-  { name: "Kontrol Layar", href: "/display-control", icon: Settings },
-  { name: "Layar Langsung", href: "/tv.html", icon: Tv, external: true },
+  { name: "Otomatisasi", href: "/automation", icon: Bot, resource: "automation" },
+  { name: "Monitor Queue", href: "/automation/queue-monitor", icon: Zap, resource: "automation" },
+  { name: "Kontrol Layar", href: "/display-control", icon: Settings, resource: "display-control" },
+  { name: "Layar Langsung", href: "/tv.html", icon: Tv, external: true, resource: null },
+];
+
+const admin = [
+  { name: "Manajemen Akses", href: "/settings/access", icon: Shield, resource: "access" },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user, canRead, isSuperAdmin, loading, logout } = useAuth();
 
   // Close sidebar on route change
   useEffect(() => {
@@ -54,6 +63,46 @@ export function Sidebar() {
     return () => { document.body.style.overflow = ''; };
   }, [mobileOpen]);
 
+  const handleLogout = async () => {
+    await logout();
+  };
+
+  const filterByPermission = (items: typeof navigation) => {
+    if (isSuperAdmin) return items;
+    return items.filter((item) => !item.resource || canRead(item.resource));
+  };
+
+  const renderLink = (item: { name: string; href: string; icon: React.ElementType; external?: boolean; resource?: string | null }) => {
+    const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+    const linkClassName = cn(
+      "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition-all duration-300",
+      isActive
+        ? "btn-gradient text-white shadow-[0_4px_14px_0_rgba(0,92,255,0.39)]"
+        : "hover:bg-black/[0.03] hover:text-foreground text-muted-foreground"
+    );
+    const iconClassName = cn("h-5 w-5", isActive ? "text-white" : "text-muted-foreground");
+
+    if (item.external) {
+      return (
+        <a key={item.name} href={item.href} target="_blank" rel="noopener noreferrer" className={linkClassName}>
+          <item.icon className={iconClassName} />
+          {item.name}
+        </a>
+      );
+    }
+
+    return (
+      <Link key={item.name} href={item.href} className={linkClassName}>
+        <item.icon className={iconClassName} />
+        {item.name}
+      </Link>
+    );
+  };
+
+  const visibleNav = filterByPermission(navigation);
+  const visibleSystems = systems.filter((item) => !item.resource || isSuperAdmin || canRead(item.resource));
+  const visibleAdmin = admin.filter((item) => !item.resource || isSuperAdmin || canRead(item.resource));
+
   const sidebarContent = (
     <>
       <div>
@@ -68,78 +117,46 @@ export function Sidebar() {
         </div>
 
         <nav className="space-y-1 mb-8">
-          {navigation.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition-all duration-300",
-                  isActive
-                    ? "btn-gradient text-white shadow-[0_4px_14px_0_rgba(0,92,255,0.39)]"
-                    : "hover:bg-black/[0.03] hover:text-foreground text-muted-foreground"
-                )}
-              >
-                <item.icon className={cn("h-5 w-5", isActive ? "text-primary" : "text-muted-foreground")} />
-                {item.name}
-              </Link>
-            );
-          })}
+          {visibleNav.map(renderLink)}
         </nav>
 
-        <div className="px-3 mb-2">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Sistem</p>
-        </div>
-        <nav className="space-y-1">
-          {systems.map((item) => {
-            const isActive = pathname === item.href;
-            const linkClassName = cn(
-              "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition-all duration-300",
-              isActive
-                ? "btn-gradient text-white shadow-[0_4px_14px_0_rgba(0,92,255,0.39)]"
-                : "hover:bg-black/[0.03] hover:text-foreground text-muted-foreground"
-            );
-            const iconClassName = cn("h-5 w-5", isActive ? "text-white" : "text-muted-foreground");
+        {visibleSystems.length > 0 && (
+          <>
+            <div className="px-3 mb-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Sistem</p>
+            </div>
+            <nav className="space-y-1 mb-8">
+              {visibleSystems.map(renderLink)}
+            </nav>
+          </>
+        )}
 
-            if (item.external) {
-              return (
-                <a
-                  key={item.name}
-                  href={item.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={linkClassName}
-                >
-                  <item.icon className={iconClassName} />
-                  {item.name}
-                </a>
-              );
-            }
-
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={linkClassName}
-              >
-                <item.icon className={iconClassName} />
-                {item.name}
-              </Link>
-            );
-          })}
-        </nav>
+        {visibleAdmin.length > 0 && (
+          <>
+            <div className="px-3 mb-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Admin</p>
+            </div>
+            <nav className="space-y-1">
+              {visibleAdmin.map(renderLink)}
+            </nav>
+          </>
+        )}
       </div>
 
       <div className="mt-auto pt-4">
         <div className="flex items-center justify-between px-2">
-          <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-full bg-muted"></div>
-            <div>
-              <p className="text-sm font-medium">Dr. Admin</p>
-              <p className="text-xs text-muted-foreground">Super Admin</p>
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs">
+              {user?.name?.charAt(0)?.toUpperCase() || "?"}
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-medium truncate">{user?.name || "Memuat..."}</p>
+              <p className="text-xs text-muted-foreground truncate">{user?.roleName || ""}</p>
             </div>
           </div>
+          <button onClick={handleLogout} className="p-2 text-muted-foreground hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all flex-shrink-0" title="Logout">
+            <LogOut size={16} />
+          </button>
         </div>
       </div>
     </>
