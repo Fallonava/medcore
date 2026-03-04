@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { hashPassword, ensureSuperAdmin } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
 // POST /api/auth/create-superadmin
 // Body: { username, password, name, adminKey }
 // Temporary endpoint to create a new super admin account

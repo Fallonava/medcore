@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { ensureSuperAdmin } from '@/lib/auth';
+
+export const dynamic = 'force-dynamic';import { ensureSuperAdmin } from '@/lib/auth';
 import { logAuditAction } from '@/lib/audit';
 
 // POST /api/auth/promote-superadmin
