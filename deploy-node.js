@@ -13,6 +13,13 @@ async function deploy() {
     });
     console.log('✅ Connected successfully.');
 
+    const envContent = fs.readFileSync('f:\\Next\\admin-dashboard\\.env.production.remote', 'utf8');
+    console.log('Writing .env file on home server...');
+    await ssh.execCommand(`cat << 'EOF' > /home/fallonava/admin-dashboard/.env\n${envContent}\nEOF`, {
+      cwd: '/home/fallonava'
+    });
+    console.log('✅ .env written');
+
     const localScript = 'c:\\Windows\\Temp\\deploy-home.sh';
     const remoteScript = '/tmp/deploy-home.sh';
     console.log('Uploading deployment script...');

@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requirePermission } from '@/lib/api-utils';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
     const rules = await prisma.broadcastRule.findMany();
     return NextResponse.json(rules);
