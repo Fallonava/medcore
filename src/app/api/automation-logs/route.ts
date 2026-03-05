@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/api-utils';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: Request) {
     const authErr = await requireAdmin(req);
     if (authErr) return authErr;

@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache';
 
 // Enable Time-based Revalidation (Vercel Edge Cache) for 10 seconds.
 // TV polling setiap 3s hanya akan mengenai DB 1 kali per 10 detik.
-export const revalidate = 10;
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
     const allDoctors = await prisma.doctor.findMany({

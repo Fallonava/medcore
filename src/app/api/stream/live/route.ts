@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { automationBroadcaster } from '@/lib/automation-broadcaster';
 
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 // ─── Data fetchers per domain ────────────────────────────────────────────────
 

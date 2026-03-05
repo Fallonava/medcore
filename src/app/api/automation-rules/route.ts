@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { requirePermission } from '@/lib/api-utils';
 import { z } from 'zod';
 
+export const dynamic = 'force-dynamic';
+
 // Validation schemas
 const ConditionSchema = z.object({
     doctorName: z.string().optional(),

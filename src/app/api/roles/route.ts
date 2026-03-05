@@ -5,6 +5,8 @@ import { logAuditAction } from '@/lib/audit';
 import { getSession } from '@/lib/auth';
 import { invalidateRbacCache } from '@/lib/rbac-cache';
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/roles — List all roles with permissions
 export async function GET(req: Request) {
   const authErr = await requirePermission(req, 'access', 'read');

@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { transformToPrismaSeeds } from '@/data/doctors-seed-v2';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
     try {
         const { doctors, shifts } = transformToPrismaSeeds();

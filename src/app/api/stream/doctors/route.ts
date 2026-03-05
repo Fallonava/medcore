@@ -5,6 +5,7 @@ import { automationBroadcaster } from '@/lib/automation-broadcaster';
 // Long-lived SSE connections require the Node.js runtime (not the Edge runtime).
 // Use the `nodejs` runtime variant supported by Next.js for route handlers.
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
     const headers = new Headers({

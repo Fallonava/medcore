@@ -4,6 +4,8 @@ import { hashPassword, getSession } from '@/lib/auth';
 import { requirePermission } from '@/lib/api-utils';
 import { logAuditAction } from '@/lib/audit';
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/users — List all users
 export async function GET(req: Request) {
   const authErr = await requirePermission(req, 'users', 'read');
