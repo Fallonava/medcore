@@ -73,6 +73,10 @@ export async function GET(req: Request) {
                 send(formatEvent('shifts', shifts));
                 send(formatEvent('leaves', leaves));
                 send(formatEvent('settings', settings));
+                
+                // ── 1.1 Legacy snapshot for tv.html (unnamed event) ──
+                const snapshot = { doctors, shifts, leaves, settings };
+                send(`data: ${JSON.stringify(snapshot, (_, v) => typeof v === 'bigint' ? v.toString() : v)}\n\n`);
             } catch (err) {
                 console.error('[SSE] initial fetch error:', err);
             }

@@ -2795,6 +2795,7 @@
 
       // Main App Logic
       const App = {
+        _data: { doctors: [], shifts: [], leaves: [], settings: {} },
         _prevDoctors: {}, // Track previous doctor states for change detection
         _greetSent: {}, // Track which greetings have been sent today
 
@@ -3056,15 +3057,30 @@
 
         connectRealtime() {
           const es = new EventSource("/api/stream/live");
+
+          // Legacy/Initial snapshot (unnamed)
           es.onmessage = (e) => {
             try {
               const res = JSON.parse(e.data);
-              if (!res || !res.doctors) return;
-              this.processData(res);
+              if (res && res.doctors) this.processData(res);
             } catch (err) {
-              console.error("SSE Error:", err);
+              console.error("Snapshot Error:", err);
             }
           };
+
+          // Modern named events
+          const events = ["doctors", "shifts", "leaves", "settings"];
+          events.forEach((eventName) => {
+            es.addEventListener(eventName, (e) => {
+              try {
+                const data = JSON.parse(e.data);
+                this.processData({ [eventName]: data });
+              } catch (err) {
+                console.error(`SSE ${eventName} Error:`, err);
+              }
+            });
+          });
+
           es.onerror = () => {
             Island.show(
               "Koneksi",
@@ -3076,30 +3092,35 @@
           };
         },
 
-        processData(res) {
+        processData(partial) {
+          if (!partial) return;
+          this._data = { ...this._data, ...partial };
+          const res = this._data;
+
           this._isFetching = true;
 
           try {
             const doctors = res.doctors || [];
             const shifts = res.shifts || [];
             const leaves = res.leaves || [];
-            
+
             // Get today's info
             const now = new Date();
             const todayDayIdx = now.getDay() === 0 ? 6 : now.getDay() - 1; // 0=Mon, 6=Sun
-            const todayStr = now.toISOString().split('T')[0];
+            const todayStr = now.toISOString().split("T")[0];
 
             // Map standard format to legacy format needed by TV UI
             const mappedData = [];
 
             // Find shifts for today
-            const todayShifts = shifts.filter(s => 
-              s.dayIdx === todayDayIdx && 
-              !(s.disabledDates || []).includes(todayStr)
+            const todayShifts = shifts.filter(
+              (s) =>
+                s.dayIdx === todayDayIdx &&
+                !(s.disabledDates || []).includes(todayStr),
             );
 
             todayShifts.forEach((shift, index) => {
-              const doc = doctors.find(d => d.id === shift.doctorId);
+              const doc = doctors.find((d) => d.id === shift.doctorId);
               if (!doc) return;
 
               const jamStr = shift.formattedTime || shift.title || "-";
@@ -3117,12 +3138,13 @@
                 Status: status,
                 Jam: jamStr,
                 JamPraktek: jamStr,
-                JamDaftar: shift.registrationTime || doc.registrationTime || "-",
+                JamDaftar:
+                  shift.registrationTime || doc.registrationTime || "-",
                 Jenis: doc.category,
                 "Code Antrian": doc.queueCode,
                 _shiftId: shift.id || index,
                 _timeState: timeState,
-                _isActive: timeState === "active"
+                _isActive: timeState === "active",
               });
             });
 
@@ -3137,7 +3159,7 @@
               "Data Error",
               "Gagal memproses data realtime",
               "error",
-              8000
+              8000,
             );
           } finally {
             this._isFetching = false;
