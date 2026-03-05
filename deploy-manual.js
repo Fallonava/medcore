@@ -23,12 +23,12 @@ async function deploy() {
     await ssh.putFile(localArchivePath, remoteArchivePath);
     console.log('✅ Uploaded.');
 
-    console.log('--- 3. Preparing remote directory ---');
-    await ssh.execCommand(`mkdir -p ${remoteBase}`, { cwd: '/home/fallonava' });
+    console.log('--- 3. Cleaning & preparing remote directory ---');
+    await ssh.execCommand(`rm -rf ${remoteBase} && mkdir -p ${remoteBase}`, { cwd: '/home/fallonava' });
     
     console.log('--- 4. Extracting archive ---');
     await ssh.execCommand(`tar -xzf ${remoteArchivePath} -C ${remoteBase}`, { cwd: '/home/fallonava' });
-    console.log('✅ Extracted.');
+    console.log('✅ Extracted (fresh clean deploy).');
 
     console.log('--- 5. Preparing environment variables ---');
     const envContent = fs.readFileSync('f:\\Next\\admin-dashboard\\.env.production.remote', 'utf8');
@@ -77,6 +77,9 @@ async function deploy() {
     } else {
       console.log('❌ DEPLOY GAGAL. Periksa log di atas.');
     }
+
+    // Cleanup temporary archive on remote
+    await ssh.execCommand(`rm -f ${remoteArchivePath}`, { cwd: '/home/fallonava' });
 
     ssh.dispose();
   } catch (err) {

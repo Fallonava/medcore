@@ -61,6 +61,8 @@ export async function GET(req: Request) {
                 }
             };
 
+            console.log(`[SSE] New connection established. UA: ${req.headers.get('user-agent')}`);
+
             // ── 1. Initial snapshot: send all domains as named events ──
             try {
                 const [doctors, shifts, leaves, settings] = await Promise.all([
@@ -69,6 +71,7 @@ export async function GET(req: Request) {
                     fetchLeaves(),
                     fetchSettings(),
                 ]);
+                console.log(`[SSE] Sending initial snapshot: ${doctors.length} doctors`);
                 send(formatEvent('doctors', doctors));
                 send(formatEvent('shifts', shifts));
                 send(formatEvent('leaves', leaves));
@@ -83,6 +86,7 @@ export async function GET(req: Request) {
 
             // ── 2. Doctor update listener (triggered by automation/manual updates) ──
             const onDoctorUpdate = async () => {
+                console.log('[SSE] Broadcasting doctor update');
                 try {
                     const doctors = await fetchDoctors();
                     send(formatEvent('doctors', doctors));
@@ -93,6 +97,7 @@ export async function GET(req: Request) {
 
             // ── 3. Settings update listener ──
             const onSettingsUpdate = async () => {
+                console.log('[SSE] Broadcasting settings update');
                 try {
                     const settings = await fetchSettings();
                     send(formatEvent('settings', settings));
@@ -118,7 +123,7 @@ export async function GET(req: Request) {
             // ── 5. Heartbeat every 25s (keeps connection through proxies) ──
             const hb = setInterval(() => {
                 send(': heartbeat\n\n');
-            }, 25_000);
+            }, 2_000);
 
             // ── 6. Cleanup on client disconnect ──
             req.signal.addEventListener('abort', () => {
