@@ -4,6 +4,8 @@ import type { Doctor, Shift, LeaveRequest } from '@/lib/data-service';
 import { evaluateRules } from '@/lib/automation';
 import { requireAdmin } from '@/lib/api-utils';
 
+export const dynamic = 'force-dynamic';
+
 // Accepts a rule (or defaults to all active rules) and optional sample data.  
 // Returns predicted updates without modifying any records.
 export async function POST(req: Request) {
