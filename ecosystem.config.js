@@ -4,7 +4,7 @@ module.exports = {
       name: 'medcore-admin',
       script: 'node',
       args: '.next/standalone/server.js',
-      cwd: '/home/ubuntu/admin-dashboard',
+      cwd: '/home/fallonava/admin-dashboard',
       instances: 1,
       autorestart: true,
       watch: false,
@@ -32,8 +32,8 @@ module.exports = {
       },
 
       // ── Production log config ──────────────────────────────────────────────
-      error_file: '/home/ubuntu/logs/medcore-error.log',
-      out_file: '/home/ubuntu/logs/medcore-out.log',
+      error_file: '/home/fallonava/logs/medcore-error.log',
+      out_file: '/home/fallonava/logs/medcore-out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss',
       merge_logs: true,
 
