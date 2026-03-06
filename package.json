@@ -40,6 +40,7 @@
     "pg": "^8.18.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "react-parallax-tilt": "^1.7.319",
     "recharts": "^3.7.0",
     "redis": "^4.6.10",
     "serwist": "^9.5.6",

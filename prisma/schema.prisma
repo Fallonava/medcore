@@ -49,6 +49,7 @@ model Doctor {
   startTime          String // Format: HH:MM
   endTime            String // Format: HH:MM
   queueCode          String
+  order              Int          @default(0) // Used for drag-and-drop manual reordering
   lastCall           String? // Format: HH:MM
   registrationTime   String? // Format: HH:MM
   lastManualOverride BigInt? // UNIX timestamp

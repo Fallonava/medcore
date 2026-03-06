@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import useSWR, { mutate } from "swr";
-import { Megaphone, Plus, Trash2, Edit3, X, Power, PowerOff, Save, MonitorPlay, Sparkles, AlertTriangle, Zap, ShieldAlert, Wrench, Info } from "lucide-react";
+import { Megaphone, Plus, Trash2, Edit3, X, Power, PowerOff, Save, MonitorPlay, Sparkles, AlertTriangle, Zap, ShieldAlert, Wrench, Info, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { BroadcastRule } from "@/lib/data-service";
 
@@ -42,6 +42,47 @@ export function BroadcastControl() {
     const [isCreating, setIsCreating] = useState(false);
     const [saving, setSaving] = useState(false);
     const [stoppingAll, setStoppingAll] = useState(false);
+
+    // Helper Custom Dropdown
+    const CustomDropdown = ({ value, options, onChange, label, placeholder, className }: any) => {
+        const [open, setOpen] = useState(false);
+        const selectedLabel = options.find((o: any) => o.value === value)?.label || placeholder || "Select";
+
+        return (
+            <div className={cn("relative z-30 flex-1", className)} onMouseLeave={() => setOpen(false)}>
+                {label && <label className="text-[11px] text-slate-500 font-bold uppercase tracking-widest block mb-2">{label}</label>}
+                <button 
+                    type="button"
+                    onClick={() => setOpen(!open)}
+                    className="flex justify-between items-center w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-800 focus:ring-2 focus:ring-orange-100 outline-none transition-all min-h-[46px]"
+                >
+                    <span className="truncate pr-2 font-semibold">{selectedLabel}</span>
+                    <ChevronDown size={14} className={cn("text-slate-400 transition-transform flex-shrink-0", open && "rotate-180")} />
+                </button>
+                
+                <div className={cn(
+                    "absolute top-[calc(100%+8px)] left-0 w-full bg-white border border-slate-100 rounded-2xl shadow-xl p-1.5 transition-all duration-300 origin-top z-50 max-h-[200px] overflow-y-auto custom-scrollbar",
+                    open ? "opacity-100 scale-y-100 translate-y-0" : "opacity-0 scale-y-95 -translate-y-2 pointer-events-none"
+                )}>
+                    {options.map((opt: any) => (
+                        <button
+                            type="button"
+                            key={opt.value}
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(opt.value); setOpen(false); }}
+                            className={cn(
+                                "w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold transition-all mb-1 last:mb-0 truncate",
+                                value === opt.value 
+                                    ? "bg-orange-50 text-orange-600" 
+                                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                            )}
+                        >
+                            {opt.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        );
+    };
 
     const handleSave = async () => {
         if (!editingRule?.message?.trim()) return;
@@ -330,30 +371,26 @@ export function BroadcastControl() {
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="text-[11px] text-slate-500 font-bold uppercase tracking-widest block mb-2">Level Alert</label>
-                                    <select
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-800 focus:border-orange-400 focus:ring-2 focus:ring-orange-100 outline-none transition-all cursor-pointer"
-                                        value={editingRule.alertLevel}
-                                        onChange={e => setEditingRule({ ...editingRule, alertLevel: e.target.value as any })}
-                                    >
-                                        <option value="Information">ℹ️ Information</option>
-                                        <option value="Warning">⚠️ Warning</option>
-                                        <option value="Critical">🚨 Critical</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="text-[11px] text-slate-500 font-bold uppercase tracking-widest block mb-2">Target Zone</label>
-                                    <select
-                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-800 focus:border-orange-400 focus:ring-2 focus:ring-orange-100 outline-none transition-all cursor-pointer"
-                                        value={editingRule.targetZone}
-                                        onChange={e => setEditingRule({ ...editingRule, targetZone: e.target.value as any })}
-                                    >
-                                        <option value="All_Zones">All Zones</option>
-                                        <option value="Lobby_Only">Lobby Only</option>
-                                        <option value="ER_Wards">ER & Wards</option>
-                                    </select>
-                                </div>
+                                <CustomDropdown 
+                                    label="Level Alert"
+                                    value={editingRule.alertLevel}
+                                    options={[
+                                        { value: 'Information', label: 'ℹ️ Information' },
+                                        { value: 'Warning', label: '⚠️ Warning' },
+                                        { value: 'Critical', label: '🚨 Critical' },
+                                    ]}
+                                    onChange={(v: any) => setEditingRule({ ...editingRule, alertLevel: v })}
+                                />
+                                <CustomDropdown 
+                                    label="Target Zone"
+                                    value={editingRule.targetZone}
+                                    options={[
+                                        { value: 'All_Zones', label: 'All Zones' },
+                                        { value: 'Lobby_Only', label: 'Lobby Only' },
+                                        { value: 'ER_Wards', label: 'ER & Wards' },
+                                    ]}
+                                    onChange={(v: any) => setEditingRule({ ...editingRule, targetZone: v })}
+                                />
                             </div>
 
                             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200">

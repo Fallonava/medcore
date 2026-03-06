@@ -6,6 +6,7 @@ import { X, Clock, Plus, Trash2, Save, Copy, Power, CalendarOff, Edit3, ChevronD
 import { cn } from "@/lib/utils";
 import type { Doctor, Shift } from "@/lib/data-service";
 import { ShiftCalendarGrid } from "./ShiftCalendarGrid";
+import { useSocket } from "@/hooks/use-socket";
 
 interface ScheduleModalProps {
     doctor: Doctor | null;
@@ -57,7 +58,91 @@ export function ScheduleModal({ doctor, shifts, isOpen, onClose, onUpdate }: Sch
     const [adding, setAdding] = useState(false);
     const [expandId, setExpandId] = useState<string | null>(null);
     const [form, setForm] = useState<Partial<Shift>>(INIT);
+
+    // Helpers for Time Conversion
+    const getTimes = (formatted: string) => {
+        const [s, e] = (formatted || "08:00-12:00").split("-").map(t => t.trim());
+        return { start: s || "08:00", end: e || "12:00" };
+    };
+
+    const updateTimes = (start: string, end: string) => {
+        setForm(f => ({ ...f, formattedTime: `${start}-${end}` }));
+    };
+
+    // Helper Custom Dropdown
+    const CustomDropdown = ({ value, options, onChange, label, placeholder, className }: any) => {
+        const [open, setOpen] = useState(false);
+        const selectedLabel = options.find((o: any) => o.value === value)?.label || placeholder || "Select";
+
+        return (
+            <div className={cn("relative z-30 flex-1", className)} onMouseLeave={() => setOpen(false)}>
+                {label && <label className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider block mb-1.5">{label}</label>}
+                <button 
+                    type="button"
+                    onClick={() => setOpen(!open)}
+                    className="flex justify-between items-center w-full bg-white rounded-2xl p-3 text-sm text-slate-700 focus:ring-2 focus:ring-blue-500/30 outline-none transition-all border border-slate-100 min-h-[46px]"
+                >
+                    <span className="truncate pr-2 font-medium">{selectedLabel}</span>
+                    <ChevronDown size={14} className={cn("text-slate-400 transition-transform flex-shrink-0", open && "rotate-180")} />
+                </button>
+                
+                <div className={cn(
+                    "absolute top-[calc(100%+8px)] left-0 w-full bg-white/95 backdrop-blur-2xl rounded-2xl shadow-[0_16px_40px_-12px_rgba(0,0,0,0.15)] border border-white p-1.5 transition-all duration-300 origin-top z-50 max-h-[200px] overflow-y-auto custom-scrollbar",
+                    open ? "opacity-100 scale-y-100 translate-y-0" : "opacity-0 scale-y-95 -translate-y-2 pointer-events-none"
+                )}>
+                    {options.map((opt: any) => (
+                        <button
+                            type="button"
+                            key={opt.value}
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(opt.value); setOpen(false); }}
+                            className={cn(
+                                "w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold transition-all mb-1 last:mb-0 truncate",
+                                value === opt.value 
+                                    ? "bg-blue-50/80 text-blue-600" 
+                                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                            )}
+                        >
+                            {opt.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        );
+    };
+
+    // Helper Custom Time Picker
+    const CustomTimeSelect = ({ value, onChange, label, className }: { value: string, onChange: (v: string) => void, label: string, className?: string }) => {
+        const [h, m] = (value || "08:00").split(":");
+        return (
+            <div className={className}>
+                {label && <label className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider block mb-1.5">{label}</label>}
+                 <div className="flex items-center gap-1 bg-white rounded-2xl px-2 py-2.5 border border-slate-100 focus-within:ring-2 focus-within:ring-blue-500/30 transition-all h-[46px]">
+                    <select 
+                        value={h || "08"}
+                        onChange={e => onChange(`${e.target.value.padStart(2,'0')}:${m || "00"}`)}
+                        className="bg-transparent text-sm font-bold text-slate-800 outline-none w-10 text-center appearance-none cursor-pointer hover:text-blue-600 transition-colors"
+                    >
+                        {Array.from({length: 24}).map((_, i) => (
+                            <option key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}</option>
+                        ))}
+                    </select>
+                    <span className="text-slate-400 font-bold">:</span>
+                    <select 
+                        value={m || "00"}
+                        onChange={e => onChange(`${h || "08"}:${e.target.value.padStart(2,'0')}`)}
+                        className="bg-transparent text-sm font-bold text-slate-800 outline-none w-10 text-center appearance-none cursor-pointer hover:text-blue-600 transition-colors"
+                    >
+                        {["00", "15", "30", "45"].map((min) => (
+                            <option key={min} value={min}>{min}</option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+        );
+    };
+
     const [mounted, setMounted] = useState(false);
+    const socket = useSocket();
 
     useEffect(() => { setMounted(true); }, []);
 
@@ -77,6 +162,7 @@ export function ScheduleModal({ doctor, shifts, isOpen, onClose, onUpdate }: Sch
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ...form, id: editId, doctorId: doctor.id, doctor: doctor.name, dayIdx: activeDay })
         });
+        socket.socket?.emit('schedule_updated', { action: 'save_shift' });
         onUpdate?.(); reset();
     };
 
@@ -103,35 +189,58 @@ export function ScheduleModal({ doctor, shifts, isOpen, onClose, onUpdate }: Sch
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id: shiftToMove.id, formattedTime: newFormattedTime })
         });
+        socket.socket?.emit('schedule_updated', { action: 'update_time' });
         onUpdate?.();
     };
 
     const del = async (id: string) => {
         if (!confirm("Hapus shift ini?")) return;
         await fetch(`/api/shifts?id=${id}`, { method: 'DELETE' });
+        socket.socket?.emit('schedule_updated', { action: 'delete_shift' });
+        onUpdate?.(); setExpandId(null);
+    };
+
+    const dup = async (s: Shift) => {
+        const title = prompt("Salin shift ke nama apa?", s.title + " Copy");
+        if (!title) return;
+        await fetch('/api/shifts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, doctorId: s.doctorId, doctor: s.doctor, dayIdx: s.dayIdx, formattedTime: s.formattedTime, color: s.color })
+        });
+        socket.socket?.emit('schedule_updated', { action: 'duplicate_shift' });
         onUpdate?.();
     };
 
-    const dup = (s: Shift) => {
-        setForm({ title: s.title, formattedTime: s.formattedTime, registrationTime: s.registrationTime || "", color: s.color, statusOverride: s.statusOverride });
-        setAdding(true); setEditId(null);
-    };
-
     const toggle = async (s: Shift) => {
-        const dates = s.disabledDates || [];
-        const nd = dates.includes(today) ? dates.filter(d => d !== today) : [...dates, today];
-        await fetch('/api/shifts', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: s.id, disabledDates: nd }) });
+        const off = s.disabledDates || [];
+        const isOff = off.includes(today);
+        const newVal = isOff ? off.filter(d => d !== today) : [...off, today];
+        await fetch('/api/shifts', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: s.id, disabledDates: newVal })
+        });
+        socket.socket?.emit('schedule_updated', { action: 'toggle_shift' });
         onUpdate?.();
     };
 
     const addDis = async (s: Shift, d: string) => {
         if (!d || (s.disabledDates || []).includes(d)) return;
-        await fetch('/api/shifts', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: s.id, disabledDates: [...(s.disabledDates || []), d].sort() }) });
+        const newVal = [...(s.disabledDates || []), d];
+        await fetch('/api/shifts', {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: s.id, disabledDates: newVal })
+        });
+        socket.socket?.emit('schedule_updated', { action: 'add_disabled_date' });
         onUpdate?.();
     };
 
     const rmDis = async (s: Shift, d: string) => {
-        await fetch('/api/shifts', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: s.id, disabledDates: (s.disabledDates || []).filter(x => x !== d) }) });
+        const newVal = (s.disabledDates || []).filter(x => x !== d);
+        await fetch('/api/shifts', {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: s.id, disabledDates: newVal })
+        });
+        socket.socket?.emit('schedule_updated', { action: 'rm_disabled_date' });
         onUpdate?.();
     };
 
@@ -217,30 +326,35 @@ export function ScheduleModal({ doctor, shifts, isOpen, onClose, onUpdate }: Sch
                             <input autoFocus className="w-full bg-white rounded-xl px-4 py-3 text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-emerald-300 border border-emerald-100 placeholder:text-slate-300"
                                 value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Nama shift, cth: Praktek Pagi"
                             />
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                <div>
-                                    <label className="text-xs text-slate-500 font-semibold block mb-1.5">Jam Praktek</label>
-                                    <input className="w-full bg-white rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-emerald-300 border border-emerald-100"
-                                        value={form.formattedTime} onChange={e => setForm({ ...form, formattedTime: e.target.value })} placeholder="08:00-12:00"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-xs text-slate-500 font-semibold block mb-1.5">Jam Daftar</label>
-                                    <input className="w-full bg-white rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-emerald-300 border border-emerald-100"
-                                        value={form.registrationTime} onChange={e => setForm({ ...form, registrationTime: e.target.value })} placeholder="07:30"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-xs text-slate-500 font-semibold block mb-1.5">Status Bawaan</label>
-                                    <select className="w-full bg-white rounded-xl px-4 py-2 text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-emerald-300 border border-emerald-100"
-                                        value={form.statusOverride || ''} onChange={e => setForm({ ...form, statusOverride: (e.target.value as Doctor['status']) || null })}
-                                    >
-                                        <option value="">Standar (Buka)</option>
-                                        <option value="AKAN_BUKA">Akan Buka</option>
-                                        <option value="OPERASI">Operasi</option>
-                                        <option value="PENUH">Penuh</option>
-                                    </select>
-                                </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <CustomTimeSelect 
+                                    label="Jam Mulai"
+                                    value={getTimes(form.formattedTime || "").start}
+                                    onChange={(v) => updateTimes(v, getTimes(form.formattedTime || "").end)}
+                                />
+                                <CustomTimeSelect 
+                                    label="Jam Selesai"
+                                    value={getTimes(form.formattedTime || "").end}
+                                    onChange={(v) => updateTimes(getTimes(form.formattedTime || "").start, v)}
+                                />
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <CustomTimeSelect 
+                                    label="Jam Pendaftaran"
+                                    value={form.registrationTime || "07:30"}
+                                    onChange={(v) => setForm({ ...form, registrationTime: v })}
+                                />
+                                <CustomDropdown 
+                                    label="Status Bawaan"
+                                    value={form.statusOverride || ''}
+                                    onChange={(v: any) => setForm({ ...form, statusOverride: v || null })}
+                                    options={[
+                                        { value: '', label: 'Standar (Buka)' },
+                                        { value: 'AKAN_BUKA', label: 'Akan Buka' },
+                                        { value: 'OPERASI', label: 'Operasi' },
+                                        { value: 'PENUH', label: 'Penuh' },
+                                    ]}
+                                />
                             </div>
                             <div className="flex items-center gap-3">
                                 <span className="text-xs font-semibold text-slate-500">Warna</span>
@@ -283,30 +397,35 @@ export function ScheduleModal({ doctor, shifts, isOpen, onClose, onUpdate }: Sch
                                 <input autoFocus className="w-full bg-white rounded-xl px-4 py-3 text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-blue-300 border border-blue-100"
                                     value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Nama shift"
                                 />
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                    <div>
-                                        <label className="text-xs text-slate-500 font-semibold block mb-1.5">Jam Praktek</label>
-                                        <input className="w-full bg-white rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-blue-300 border border-blue-100"
-                                            value={form.formattedTime} onChange={e => setForm({ ...form, formattedTime: e.target.value })} placeholder="08:00-12:00"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs text-slate-500 font-semibold block mb-1.5">Jam Daftar</label>
-                                        <input className="w-full bg-white rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-blue-300 border border-blue-100"
-                                            value={form.registrationTime} onChange={e => setForm({ ...form, registrationTime: e.target.value })} placeholder="07:30"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="text-xs text-slate-500 font-semibold block mb-1.5">Status Bawaan</label>
-                                        <select className="w-full bg-white rounded-xl px-4 py-2 text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-blue-300 border border-blue-100"
-                                            value={form.statusOverride || ''} onChange={e => setForm({ ...form, statusOverride: (e.target.value as Doctor['status']) || null })}
-                                        >
-                                            <option value="">Standar (Buka)</option>
-                                            <option value="AKAN_BUKA">Akan Buka</option>
-                                            <option value="OPERASI">Operasi</option>
-                                            <option value="PENUH">Penuh</option>
-                                        </select>
-                                    </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <CustomTimeSelect 
+                                        label="Jam Mulai"
+                                        value={getTimes(form.formattedTime || "").start}
+                                        onChange={(v) => updateTimes(v, getTimes(form.formattedTime || "").end)}
+                                    />
+                                    <CustomTimeSelect 
+                                        label="Jam Selesai"
+                                        value={getTimes(form.formattedTime || "").end}
+                                        onChange={(v) => updateTimes(getTimes(form.formattedTime || "").start, v)}
+                                    />
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <CustomTimeSelect 
+                                        label="Jam Pendaftaran"
+                                        value={form.registrationTime || "07:30"}
+                                        onChange={(v) => setForm({ ...form, registrationTime: v })}
+                                    />
+                                    <CustomDropdown 
+                                        label="Status Bawaan"
+                                        value={form.statusOverride || ''}
+                                        onChange={(v: any) => setForm({ ...form, statusOverride: v || null })}
+                                        options={[
+                                            { value: '', label: 'Standar (Buka)' },
+                                            { value: 'AKAN_BUKA', label: 'Akan Buka' },
+                                            { value: 'OPERASI', label: 'Operasi' },
+                                            { value: 'PENUH', label: 'Penuh' },
+                                        ]}
+                                    />
                                 </div>
                                 <div className="flex items-center gap-3">
                                     <span className="text-xs font-semibold text-slate-500">Warna</span>

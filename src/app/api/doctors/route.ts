@@ -37,6 +37,7 @@ const UpdateDoctorSchema = CreateDoctorSchema.partial().extend({
 export async function GET() {
     const doctors = await prisma.doctor.findMany({
         orderBy: [
+            { order: 'asc' },
             { specialty: 'asc' },
             { name: 'asc' }
         ]
@@ -104,6 +105,23 @@ export async function POST(req: Request) {
             if (err instanceof z.ZodError) {
                 return NextResponse.json({ error: 'Validation failed', details: err.flatten() }, { status: 400 });
             }
+            return NextResponse.json({ error: String(err) }, { status: 500 });
+        }
+    }
+
+    if (action === 'reorder') {
+        try {
+            const body = await req.json(); // Array of { id, order }
+            await prisma.$transaction(
+                body.map((item: { id: string, order: number }) => 
+                    prisma.doctor.update({
+                        where: { id: String(item.id) },
+                        data: { order: Number(item.order) }
+                    })
+                )
+            );
+            return NextResponse.json({ success: true });
+        } catch (err) {
             return NextResponse.json({ error: String(err) }, { status: 500 });
         }
     }

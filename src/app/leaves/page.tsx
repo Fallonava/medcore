@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import useSWR, { mutate } from "swr";
 import { useDebounce } from "@/hooks/use-debounce";
 import { LeaveCalendar } from "@/components/leaves/LeaveCalendar";
-import { Search, CalendarDays, UserCheck, Clock3 } from "lucide-react";
+import { Search, CalendarDays, UserCheck, Clock3, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { LeaveRequest, Doctor } from "@/lib/data-service";
 import { AllLeavesModal } from "@/components/leaves/AllLeavesModal";
@@ -16,7 +16,8 @@ export default function LeavesPage() {
     const leaves = Array.isArray(rawLeaves) ? rawLeaves : [];
     const doctors = Array.isArray(rawDoctors) ? rawDoctors : [];
     const [searchQuery, setSearchQuery] = useState("");
-    const debouncedSearch = useDebounce(searchQuery, 200);
+    const debouncedSearch = useDebounce(searchQuery, 400); // 400ms delay for visual feedback
+    const isSearching = searchQuery !== debouncedSearch;
     const [isAllLeavesOpen, setIsAllLeavesOpen] = useState(false);
 
     const totalLeaves = leaves.length;
@@ -80,7 +81,11 @@ export default function LeavesPage() {
 
                 {/* Search */}
                 <div className="relative w-full md:w-72">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
+                    {isSearching ? (
+                        <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500 h-4 w-4 animate-spin" />
+                    ) : (
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
+                    )}
                     <input
                         type="text"
                         placeholder="Cari dokter..."

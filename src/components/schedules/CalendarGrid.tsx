@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronLeft, ChevronRight, Plus, Trash2, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Trash2, X, ChevronDown, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Shift } from "@/lib/data-service";
+import useSWR from "swr";
+import type { Shift, Doctor } from "@/lib/data-service";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 
 const DAYS = [
     { day: "MON", date: 12 },
@@ -36,12 +38,57 @@ export function CalendarGrid() {
     const [shifts, setShifts] = useState<Shift[]>([]);
     const [showModal, setShowModal] = useState(false);
 
+    // Helper Custom Dropdown
+    const CustomDropdown = ({ value, options, onChange, label, placeholder }: any) => {
+        const [open, setOpen] = useState(false);
+        const selectedLabel = options.find((o: any) => o.value === value)?.label || placeholder || "Select";
+
+        return (
+            <div className="relative z-30 flex-1" onMouseLeave={() => setOpen(false)}>
+                {label && <label className="text-[11px] text-slate-500 font-bold uppercase tracking-wider block mb-1.5">{label}</label>}
+                <button 
+                    type="button"
+                    onClick={() => setOpen(!open)}
+                    className="flex justify-between items-center w-full bg-white rounded-2xl p-3 text-sm text-slate-700 focus:ring-2 focus:ring-blue-500/30 outline-none transition-all border border-slate-100 min-h-[46px]"
+                >
+                    <span className="truncate pr-2 font-medium">{selectedLabel}</span>
+                    <ChevronDown size={14} className={cn("text-slate-400 transition-transform flex-shrink-0", open && "rotate-180")} />
+                </button>
+                
+                <div className={cn(
+                    "absolute top-[calc(100%+8px)] left-0 w-full bg-white border border-slate-100 rounded-2xl shadow-xl p-1.5 transition-all duration-300 origin-top z-50 max-h-[200px] overflow-y-auto custom-scrollbar",
+                    open ? "opacity-100 scale-y-100 translate-y-0" : "opacity-0 scale-y-95 -translate-y-2 pointer-events-none"
+                )}>
+                    {options.map((opt: any) => (
+                        <button
+                            type="button"
+                            key={opt.value}
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(opt.value); setOpen(false); }}
+                            className={cn(
+                                "w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold transition-all mb-1 last:mb-0 truncate",
+                                value === opt.value 
+                                    ? "bg-blue-50/80 text-blue-600" 
+                                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                            )}
+                        >
+                            {opt.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        );
+    };
+
+    const { data: doctors = [] } = useSWR<Doctor[]>('/api/doctors');
+
     // Form State
     const [newShift, setNewShift] = useState<Partial<Shift>>({
         dayIdx: 0,
         timeIdx: 0,
         color: 'blue',
-        doctorId: ''
+        doctorId: '',
+        doctor: '',
+        title: ''
     });
 
     useEffect(() => {
@@ -162,71 +209,79 @@ export function CalendarGrid() {
             {/* Add Shift Modal */}
             {showModal && (
                 <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm rounded-2xl">
-                    <div className="bg-slate-800 rounded-xl p-6 w-full max-w-md shadow-2xl">
-                        <h3 className="text-xl font-bold text-white mb-4">Add New Shift</h3>
+                    <div className="bg-white/90 backdrop-blur-2xl rounded-3xl p-6 w-full max-w-md shadow-2xl border border-white/40">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="text-xl font-black text-slate-800 tracking-tight">Tambah Shift Baru</h3>
+                            <button onClick={() => setShowModal(false)} className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        
                         <div className="space-y-4">
+                            <SearchableSelect
+                                label="Pilih Dokter"
+                                placeholder="Cari Dokter..."
+                                searchPlaceholder="Cari nama atau spesialisasi..."
+                                noResultsText="Dokter tidak ditemukan"
+                                options={doctors.map(d => ({ 
+                                    value: d.id, 
+                                    label: d.name,
+                                    sublabel: d.specialty,
+                                    image: d.image
+                                }))}
+                                value={newShift.doctorId}
+                                onChange={(docId: string) => {
+                                    const doc = doctors.find(d => d.id === docId);
+                                    if (doc) {
+                                        setNewShift({ ...newShift, doctorId: doc.id, doctor: doc.name });
+                                    }
+                                }}
+                            />
+
                             <div>
-                                <label className="block text-xs text-slate-400 mb-1">Shift Title</label>
+                                <label className="text-[11px] text-slate-500 font-bold uppercase tracking-wider block mb-1.5">Judul Shift</label>
                                 <input
-                                    className="w-full bg-slate-900 border-700 rounded-lg p-2 text-white text-sm"
-                                    placeholder="e.g. Surgery, Consultation"
+                                    className="w-full bg-white rounded-2xl p-3 text-sm text-slate-800 outline-none transition-all shadow-[inset_0_1px_1px_rgba(0,0,0,0.05)] border border-slate-200 focus:border-blue-500/50 focus:ring-4 focus:ring-blue-500/10"
+                                    placeholder="cth. Operasi, Konsultasi"
                                     value={newShift.title || ''}
                                     onChange={e => setNewShift({ ...newShift, title: e.target.value })}
                                 />
                             </div>
-                            <div>
-                                <label className="block text-xs text-slate-400 mb-1">Doctor Name</label>
-                                <input
-                                    className="w-full bg-slate-900 border-700 rounded-lg p-2 text-white text-sm"
-                                    placeholder="Dr. Name"
-                                    value={newShift.doctor || ''}
-                                    onChange={e => setNewShift({ ...newShift, doctor: e.target.value })}
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                                <CustomDropdown 
+                                    label="Day"
+                                    value={newShift.dayIdx}
+                                    options={DAYS.map((d, i) => ({ value: i, label: d.day }))}
+                                    onChange={(v: number) => setNewShift({ ...newShift, dayIdx: v })}
+                                />
+                                <CustomDropdown 
+                                    label="Time Slot"
+                                    value={newShift.timeIdx}
+                                    options={TIME_SLOTS.map((t, i) => ({ value: i, label: t }))}
+                                    onChange={(v: number) => setNewShift({ ...newShift, timeIdx: v })}
                                 />
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-xs text-slate-400 mb-1">Day</label>
-                                    <select
-                                        className="w-full bg-slate-900 border-700 rounded-lg p-2 text-white text-sm"
-                                        value={newShift.dayIdx}
-                                        onChange={e => setNewShift({ ...newShift, dayIdx: parseInt(e.target.value) })}
-                                    >
-                                        {DAYS.map((d, i) => <option key={i} value={i}>{d.day}</option>)}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-xs text-slate-400 mb-1">Time Slot</label>
-                                    <select
-                                        className="w-full bg-slate-900 border-700 rounded-lg p-2 text-white text-sm"
-                                        value={newShift.timeIdx}
-                                        onChange={e => setNewShift({ ...newShift, timeIdx: parseInt(e.target.value) })}
-                                    >
-                                        {TIME_SLOTS.map((t, i) => <option key={i} value={i}>{t}</option>)}
-                                    </select>
-                                </div>
-                            </div>
-                            <div>
-                                <label className="block text-xs text-slate-400 mb-1">Color Tag</label>
-                                <select
-                                    className="w-full bg-slate-900 border-700 rounded-lg p-2 text-white text-sm"
-                                    value={newShift.color}
-                                    onChange={e => setNewShift({ ...newShift, color: e.target.value })}
-                                >
-                                    {Object.keys(colorStyles).map(c => <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>)}
-                                </select>
-                            </div>
-                            <div className="flex justify-end gap-3 mt-6">
+
+                            <CustomDropdown 
+                                label="Color Tag"
+                                value={newShift.color}
+                                options={Object.keys(colorStyles).map(c => ({ value: c, label: c.charAt(0).toUpperCase() + c.slice(1) }))}
+                                onChange={(v: string) => setNewShift({ ...newShift, color: v })}
+                            />
+
+                            <div className="flex gap-3 mt-8">
                                 <button
                                     onClick={() => setShowModal(false)}
-                                    className="px-4 py-2 text-slate-400 hover:text-white text-sm"
+                                    className="flex-1 py-3.5 rounded-2xl bg-slate-50 text-slate-500 text-sm font-bold hover:bg-slate-100 transition-all border border-slate-200"
                                 >
-                                    Cancel
+                                    Batal
                                 </button>
                                 <button
                                     onClick={handleAddShift}
-                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-sm font-medium"
+                                    className="flex-[2] py-3.5 rounded-2xl btn-gradient text-white text-sm font-black shadow-[0_4px_14px_rgba(0,0,0,0.15)] active:scale-95 transition-all"
                                 >
-                                    Create Shift
+                                    Buat Shift
                                 </button>
                             </div>
                         </div>

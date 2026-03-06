@@ -4,7 +4,7 @@ import { useState, useMemo } from "react";
 import useSWR, { mutate } from "swr";
 import Image from "next/image";
 import { useDebounce } from "@/hooks/use-debounce";
-import { Users, Search, Plus, Edit2, Trash2 } from "lucide-react";
+import { Users, Search, Plus, Edit2, Trash2, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import type { Shift, Doctor } from "@/lib/data-service";
 import { ScheduleModal } from "./ScheduleModal";
@@ -26,7 +26,8 @@ export function UpcomingShifts() {
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
     const [searchQuery, setSearchQuery] = useState("");
-    const debouncedSearch = useDebounce(searchQuery, 200);
+    const debouncedSearch = useDebounce(searchQuery, 400); // Increased delay
+    const isSearching = searchQuery !== debouncedSearch;
 
     const parentRef = useRef<HTMLDivElement>(null);
 
@@ -120,7 +121,11 @@ export function UpcomingShifts() {
                 <div className="relative mb-6 group">
                     <div className="absolute -inset-0.5 bg-primary/10 rounded-xl blur opacity-0 group-focus-within:opacity-100 transition duration-500"></div>
                     <div className="relative">
-                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
+                        {isSearching ? (
+                            <Loader2 className="absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-500 h-4 w-4 animate-spin" />
+                        ) : (
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
+                        )}
                         <input
                             type="text"
                             placeholder="Cari dokter..."

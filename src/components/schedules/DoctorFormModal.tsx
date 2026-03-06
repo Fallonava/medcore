@@ -85,6 +85,39 @@ export function DoctorFormModal({ isOpen, onClose, doctor, onSuccess }: DoctorFo
 
     if (!isOpen || !mounted) return null;
 
+    // Custom Time Picker Helper
+    const CustomTimeSelect = ({ value, onChange, label }: { value: string, onChange: (v: string) => void, label: string }) => {
+        const [h, m] = (value || "08:00").split(":");
+        return (
+            <div>
+                <label className="flex items-center gap-1 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                    <Clock size={9} /> {label}
+                </label>
+                <div className="flex items-center gap-1 bg-white/50 backdrop-blur-md rounded-2xl px-2 py-2.5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_2px_10px_-3px_rgba(0,0,0,0.02)] focus-within:bg-white/90 focus-within:ring-1 focus-within:ring-blue-500/30 transition-all">
+                    <select 
+                        value={h || "08"}
+                        onChange={e => onChange(`${e.target.value}:${m || "00"}`)}
+                        className="bg-transparent text-sm font-bold text-slate-800 outline-none w-10 text-center appearance-none cursor-pointer hover:text-blue-600 transition-colors"
+                    >
+                        {Array.from({length: 24}).map((_, i) => (
+                            <option key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}</option>
+                        ))}
+                    </select>
+                    <span className="text-slate-400 font-bold">:</span>
+                    <select 
+                        value={m || "00"}
+                        onChange={e => onChange(`${h || "08"}:${e.target.value}`)}
+                        className="bg-transparent text-sm font-bold text-slate-800 outline-none w-10 text-center appearance-none cursor-pointer hover:text-blue-600 transition-colors"
+                    >
+                        {["00", "15", "30", "45"].map((min) => (
+                            <option key={min} value={min}>{min}</option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+        );
+    };
+
     return createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/20 backdrop-blur-md animate-in fade-in duration-300">
             <div
@@ -213,28 +246,16 @@ export function DoctorFormModal({ isOpen, onClose, doctor, onSuccess }: DoctorFo
                                 className="w-full bg-white/50 backdrop-blur-md rounded-2xl px-3 py-3.5 text-sm font-bold text-slate-800 outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_2px_10px_-3px_rgba(0,0,0,0.02)] focus:bg-white/90 focus:ring-1 focus:ring-blue-500/30 transition-all text-center placeholder:text-slate-400"
                             />
                         </div>
-                        <div>
-                            <label className="flex items-center gap-1 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
-                                <Clock size={9} /> Mulai
-                            </label>
-                            <input
-                                type="time"
-                                value={formData.startTime}
-                                onChange={e => setFormData({ ...formData, startTime: e.target.value })}
-                                className="w-full bg-white/50 backdrop-blur-md rounded-2xl px-3 py-3.5 text-sm font-semibold text-slate-800 outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_2px_10px_-3px_rgba(0,0,0,0.02)] focus:bg-white/90 focus:ring-1 focus:ring-blue-500/30 transition-all placeholder:text-slate-400"
-                            />
-                        </div>
-                        <div>
-                            <label className="flex items-center gap-1 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
-                                <Clock size={9} /> Selesai
-                            </label>
-                            <input
-                                type="time"
-                                value={formData.endTime}
-                                onChange={e => setFormData({ ...formData, endTime: e.target.value })}
-                                className="w-full bg-white/50 backdrop-blur-md rounded-2xl px-3 py-3.5 text-sm font-semibold text-slate-800 outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_2px_10px_-3px_rgba(0,0,0,0.02)] focus:bg-white/90 focus:ring-1 focus:ring-blue-500/30 transition-all placeholder:text-slate-400"
-                            />
-                        </div>
+                        <CustomTimeSelect 
+                            label="Mulai"
+                            value={formData.startTime}
+                            onChange={(v) => setFormData(f => ({ ...f, startTime: v }))}
+                        />
+                        <CustomTimeSelect 
+                            label="Selesai"
+                            value={formData.endTime}
+                            onChange={(v) => setFormData(f => ({ ...f, endTime: v }))}
+                        />
                     </div>
                 </div>
 

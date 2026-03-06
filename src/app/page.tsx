@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Activity, Users, MonitorPlay, AlertCircle, Search, Filter, Zap, Power, Clock, TrendingUp, BarChart3, CalendarCheck, BriefcaseMedical, FileClock, CheckCircle2, Wifi, WifiOff } from "lucide-react";
+import { Activity, Users, MonitorPlay, AlertCircle, Search, Filter, Zap, Power, Clock, TrendingUp, BarChart3, CalendarCheck, BriefcaseMedical, FileClock, CheckCircle2, Wifi, WifiOff, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Doctor, LeaveRequest, Shift, Settings } from "@/lib/data-service";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -37,7 +37,8 @@ export default function Home() {
   });
 
   const [searchQuery, setSearchQuery] = useState("");
-  const debouncedSearch = useDebounce(searchQuery, 200);
+  const debouncedSearch = useDebounce(searchQuery, 400); // 400ms delay for visual feedback
+  const isSearching = searchQuery !== debouncedSearch;
 
   // Calculate today's day index (0=Mon, 6=Sun)
   const todayDayIdx = now.getDay() === 0 ? 6 : now.getDay() - 1;
@@ -285,7 +286,11 @@ export default function Home() {
           <div className="relative group hidden lg:block">
             <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl blur opacity-0 group-focus-within:opacity-100 transition duration-500"></div>
             <div className="relative">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
+              {isSearching ? (
+                <Loader2 className="absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-500 h-4 w-4 animate-spin" />
+              ) : (
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
+              )}
               <input
                 type="text"
                 placeholder="Cari dokter..."
@@ -386,7 +391,11 @@ export default function Home() {
             <div className="flex items-center gap-3">
               {/* Mobile Search */}
               <div className="relative group lg:hidden">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
+                {isSearching ? (
+                  <Loader2 className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500 h-4 w-4 animate-spin" />
+                ) : (
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
+                )}
                 <input
                   type="text"
                   placeholder="Cari..."

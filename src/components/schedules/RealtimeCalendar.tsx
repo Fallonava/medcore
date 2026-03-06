@@ -2,9 +2,10 @@
 
 import { useState, Fragment, useEffect } from "react";
 import useSWR, { mutate } from "swr";
-import { ChevronLeft, ChevronRight, Plus, X, Clock, User } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, X, Clock, User, ChevronDown, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Shift, Doctor } from "@/lib/data-service";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 
 const HOURS = [
     { label: "07:00", hour: 7 },
@@ -77,6 +78,78 @@ export function RealtimeCalendar({ selectedDate, onDateChange }: RealtimeCalenda
         title: "Praktek",
         registrationTime: "07:30"
     });
+
+    // Helper Custom Dropdown
+    const CustomDropdown = ({ value, options, onChange, label, placeholder }: any) => {
+        const [open, setOpen] = useState(false);
+        const selectedLabel = options.find((o: any) => o.value === value)?.label || placeholder || "Select";
+
+        return (
+            <div className="relative z-30 flex-1" onMouseLeave={() => setOpen(false)}>
+                {label && <label className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider block mb-1.5">{label}</label>}
+                <button 
+                    type="button"
+                    onClick={() => setOpen(!open)}
+                    className="flex justify-between items-center w-full bg-white/50 backdrop-blur-md rounded-2xl p-3 text-sm text-foreground focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_2px_10px_-3px_rgba(0,0,0,0.02)] hover:bg-white/70 min-h-[46px]"
+                >
+                    <span className="truncate pr-2">{selectedLabel}</span>
+                    <ChevronDown size={14} className={cn("text-slate-400 transition-transform flex-shrink-0", open && "rotate-180")} />
+                </button>
+                
+                <div className={cn(
+                    "absolute top-[calc(100%+8px)] left-0 w-full bg-white/95 backdrop-blur-2xl rounded-2xl shadow-[0_16px_40px_-12px_rgba(0,0,0,0.15)] border border-white p-1.5 transition-all duration-300 origin-top z-50 max-h-[200px] overflow-y-auto custom-scrollbar",
+                    open ? "opacity-100 scale-y-100 translate-y-0" : "opacity-0 scale-y-95 -translate-y-2 pointer-events-none"
+                )}>
+                    {options.map((opt: any) => (
+                        <button
+                            type="button"
+                            key={opt.value}
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(opt.value); setOpen(false); }}
+                            className={cn(
+                                "w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold transition-all mb-1 last:mb-0 truncate",
+                                value === opt.value 
+                                    ? "bg-blue-50/80 text-blue-600" 
+                                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                            )}
+                        >
+                            {opt.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        );
+    };
+
+    // Helper Custom Time Picker
+    const CustomTimeSelect = ({ value, onChange, label }: { value: string, onChange: (v: string) => void, label: string }) => {
+        const [h, m] = (value || "08:00").split(":");
+        return (
+            <div>
+                {label && <label className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider block mb-1.5">{label}</label>}
+                 <div className="flex items-center gap-1 bg-white/50 backdrop-blur-md rounded-2xl px-2 py-2.5 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_2px_10px_-3px_rgba(0,0,0,0.02)] focus-within:bg-white/90 focus-within:ring-1 focus-within:ring-blue-500/30 transition-all h-[46px]">
+                    <select 
+                        value={h || "08"}
+                        onChange={e => onChange(`${e.target.value}:${m || "00"}`)}
+                        className="bg-transparent text-sm font-bold text-slate-800 outline-none w-10 text-center appearance-none cursor-pointer hover:text-blue-600 transition-colors"
+                    >
+                        {Array.from({length: 24}).map((_, i) => (
+                            <option key={i} value={i.toString().padStart(2, '0')}>{i.toString().padStart(2, '0')}</option>
+                        ))}
+                    </select>
+                    <span className="text-slate-400 font-bold">:</span>
+                    <select 
+                        value={m || "00"}
+                        onChange={e => onChange(`${h || "08"}:${e.target.value}`)}
+                        className="bg-transparent text-sm font-bold text-slate-800 outline-none w-10 text-center appearance-none cursor-pointer hover:text-blue-600 transition-colors"
+                    >
+                        {["00", "15", "30", "45"].map((min) => (
+                            <option key={min} value={min}>{min}</option>
+                        ))}
+                    </select>
+                </div>
+            </div>
+        );
+    };
 
     const fetchData = () => {
         mutate('/api/shifts');
@@ -241,7 +314,6 @@ export function RealtimeCalendar({ selectedDate, onDateChange }: RealtimeCalenda
                 </div>
             </div>
 
-            {/* ── Add Shift Modal ──────────────────────────────── */}
             {showAddModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-foreground/20 backdrop-blur-sm">
                     <div className="bg-white/70 backdrop-blur-[50px] saturate-200 rounded-3xl p-6 w-full max-w-md shadow-[0_16px_60px_-15px_rgba(0,0,0,0.2)] relative">
@@ -253,91 +325,75 @@ export function RealtimeCalendar({ selectedDate, onDateChange }: RealtimeCalenda
                         </div>
 
                         <div className="space-y-4">
-                            <div>
-                                <label className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider block mb-1.5">Doctor</label>
-                                <select
-                                    className="w-full bg-white/50 backdrop-blur-md rounded-2xl p-3 text-sm text-foreground focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_2px_10px_-3px_rgba(0,0,0,0.02)] appearance-none focus:bg-white/70"
-                                    value={newShift.doctorId}
-                                    onChange={e => {
-                                        const docId = e.target.value;
-                                        const docName = doctors.find(d => d.id === docId)?.name || "";
-                                        setNewShift({ ...newShift, doctorId: docId, doctor: docName });
-                                    }}
-                                >
-                                    <option value="" disabled>Select Doctor</option>
-                                    {doctors.map(d => (
-                                        <option key={d.id} value={d.id}>{d.name} ({d.specialty})</option>
-                                    ))}
-                                </select>
-                            </div>
+                            <SearchableSelect
+                                label="Dokter"
+                                placeholder="Pilih Dokter..."
+                                searchPlaceholder="Cari nama atau spesialisasi..."
+                                noResultsText="Dokter tidak ditemukan"
+                                options={doctors.map(d => ({ 
+                                    value: d.id, 
+                                    label: d.name,
+                                    sublabel: d.specialty,
+                                    image: d.image
+                                }))}
+                                value={newShift.doctorId}
+                                onChange={(docId: string) => {
+                                    const doc = doctors.find(d => d.id === docId);
+                                    if (doc) {
+                                        setNewShift({ ...newShift, doctorId: doc.id, doctor: doc.name });
+                                    }
+                                }}
+                            />
 
                             <div className="grid grid-cols-2 gap-4">
+                                <CustomDropdown 
+                                    label="Hari"
+                                    value={newShift.dayIdx}
+                                    onChange={(val: number) => setNewShift({ ...newShift, dayIdx: val })}
+                                    options={['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'].map((d, i) => ({ value: i, label: d }))}
+                                />
                                 <div>
-                                    <label className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider block mb-1.5">Day</label>
-                                    <select
-                                        className="w-full bg-white/50 backdrop-blur-md rounded-2xl p-3 text-sm text-foreground focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_2px_10px_-3px_rgba(0,0,0,0.02)] appearance-none focus:bg-white/70"
-                                        value={newShift.dayIdx}
-                                        onChange={e => setNewShift({ ...newShift, dayIdx: parseInt(e.target.value) })}
-                                    >
-                                        {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((d, i) => (
-                                            <option key={i} value={i}>{d}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider block mb-1.5">Type</label>
+                                    <label className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider block mb-1.5">Judul Shift</label>
                                     <input
                                         className="w-full bg-white/50 backdrop-blur-md rounded-2xl p-3 text-sm text-foreground focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_2px_10px_-3px_rgba(0,0,0,0.02)] placeholder:text-muted-foreground/60 focus:bg-white/70"
                                         value={newShift.title}
                                         onChange={e => setNewShift({ ...newShift, title: e.target.value })}
-                                        placeholder="e.g. Praktek"
+                                        placeholder="cth. Praktek Pagi"
                                     />
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider block mb-1.5">Start</label>
-                                    <input
-                                        type="time"
-                                        className="w-full bg-white/50 backdrop-blur-md rounded-2xl p-3 text-sm text-foreground focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_2px_10px_-3px_rgba(0,0,0,0.02)] focus:bg-white/70"
-                                        value={newShift.start}
-                                        onChange={e => setNewShift({ ...newShift, start: e.target.value })}
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider block mb-1.5">End</label>
-                                    <input
-                                        type="time"
-                                        className="w-full bg-white/50 backdrop-blur-md rounded-2xl p-3 text-sm text-foreground focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_2px_10px_-3px_rgba(0,0,0,0.02)] focus:bg-white/70"
-                                        value={newShift.end}
-                                        onChange={e => setNewShift({ ...newShift, end: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider block mb-1.5">Registration Time</label>
-                                <input
-                                    type="time"
-                                    className="w-full bg-white/50 backdrop-blur-md rounded-2xl p-3 text-sm text-foreground focus:border-primary focus:ring-1 focus:ring-primary/20 outline-none transition-all shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_2px_10px_-3px_rgba(0,0,0,0.02)] focus:bg-white/70"
-                                    value={newShift.registrationTime || ''}
-                                    onChange={e => setNewShift({ ...newShift, registrationTime: e.target.value })}
+                                <CustomTimeSelect 
+                                    label="Start"
+                                    value={newShift.start}
+                                    onChange={(v) => setNewShift({ ...newShift, start: v })}
+                                />
+                                <CustomTimeSelect 
+                                    label="End"
+                                    value={newShift.end}
+                                    onChange={(v) => setNewShift({ ...newShift, end: v })}
                                 />
                             </div>
+
+                            <CustomTimeSelect 
+                                label="Registration Time"
+                                value={newShift.registrationTime}
+                                onChange={(v) => setNewShift({ ...newShift, registrationTime: v })}
+                            />
 
                             <div className="pt-4 flex gap-3">
                                 <button
                                     onClick={() => setShowAddModal(false)}
                                     className="flex-1 py-3 rounded-2xl border border-slate-200 text-foreground text-sm font-bold hover:bg-slate-50 hover:shadow-[0_4px_14px_0_rgba(0,0,0,0.02)] transition-all"
                                 >
-                                    Cancel
+                                    Batal
                                 </button>
                                 <button
                                     onClick={handleAddShift}
                                     className="flex-1 py-3 rounded-2xl btn-gradient text-white text-sm font-bold hover:shadow-[0_6px_20px_rgba(0,92,255,0.23)] transition-all shadow-[0_4px_14px_0_rgba(0,92,255,0.39)] active:scale-[0.98]"
                                 >
-                                    Save Shift
+                                    Simpan Shift
                                 </button>
                             </div>
                         </div>

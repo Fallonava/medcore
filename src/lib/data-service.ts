@@ -50,6 +50,7 @@ export interface Doctor {
     startTime: string;   // e.g., "08:00"
     endTime: string;     // e.g., "14:00"
     queueCode: string;   // e.g., "A-01" or "BP"
+    order: number;       // default 0, used for manual arrangement
     lastCall?: string;
     registrationTime?: string;
     lastManualOverride?: number; // Timestamp of last manual status change
