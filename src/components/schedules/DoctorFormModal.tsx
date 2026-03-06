@@ -119,9 +119,9 @@ export function DoctorFormModal({ isOpen, onClose, doctor, onSuccess }: DoctorFo
     };
 
     return createPortal(
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/20 backdrop-blur-md animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/40 sm:bg-slate-900/20 backdrop-blur-sm sm:backdrop-blur-md animate-in fade-in duration-300">
             <div
-                className="bg-white/80 backdrop-blur-[50px] saturate-200 rounded-[32px] w-full max-w-md shadow-[0_24px_80px_-12px_rgba(0,0,0,0.2)] border border-white/60 animate-in zoom-in-95 duration-300 relative overflow-hidden"
+                className="bg-white/95 sm:bg-white/80 backdrop-blur-xl sm:backdrop-blur-[50px] saturate-200 rounded-t-[32px] sm:rounded-[32px] w-full max-w-md shadow-[0_-10px_40px_rgba(0,0,0,0.1)] sm:shadow-[0_24px_80px_-12px_rgba(0,0,0,0.2)] border-t border-white/60 sm:border animate-in slide-in-from-bottom sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300 relative overflow-hidden flex flex-col max-h-[90vh] overflow-y-auto"
                 onClick={e => e.stopPropagation()}
             >
                 {/* ── Header ── */}

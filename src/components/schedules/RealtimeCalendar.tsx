@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, Plus, X, Clock, User, ChevronDown, Search } 
 import { cn } from "@/lib/utils";
 import type { Shift, Doctor } from "@/lib/data-service";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
+import { useSSE } from '@/hooks/use-sse';
 
 const HOURS = [
     { label: "07:00", hour: 7 },
@@ -43,30 +44,17 @@ export function RealtimeCalendar({ selectedDate, onDateChange }: RealtimeCalenda
     const { data: doctors = [] } = useSWR<Doctor[]>('/api/doctors');
 
     // ─── Real-time Updates via SSE ───
-    useEffect(() => {
-        const eventSource = new EventSource('/api/realtime/doctors');
-
-        eventSource.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                console.log('[SSE] Received doctor updates:', data);
-                // Trigger SWR mutation to re-fetch data
+    useSSE({
+        url: '/api/realtime/doctors',
+        handlers: {}, // Required by UseSSEOptions
+        onMessage: (data: any) => {
+            if (data && data.updates) {
+                console.log('[SSE] Updates in Calendar:', data);
                 mutate('/api/doctors');
                 mutate('/api/shifts');
-            } catch (err) {
-                console.error('[SSE] Failed to parse message:', err);
             }
-        };
-
-        eventSource.onerror = (err) => {
-            console.error('[SSE] EventSource failed:', err);
-            eventSource.close();
-        };
-
-        return () => {
-            eventSource.close();
-        };
-    }, []);
+        }
+    });
 
     const [showAddModal, setShowAddModal] = useState(false);
     const [newShift, setNewShift] = useState({

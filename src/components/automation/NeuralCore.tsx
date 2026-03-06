@@ -39,7 +39,7 @@ export function NeuralCore() {
     }, [shifts, doctors, broadcasts]);
 
     return (
-        <div className="relative flex flex-col rounded-3xl border border-slate-200 bg-white p-6 overflow-hidden group shadow-lg shadow-slate-200/60 transition-all duration-500 hover:shadow-xl hover:border-slate-300 h-full">
+        <div className="relative flex flex-col rounded-3xl border border-slate-200 bg-white p-6 overflow-hidden group shadow-lg shadow-slate-200/60 transition-all duration-500 hover:shadow-xl hover:border-slate-300">
             {/* Soft ambient light glows */}
             <div className="absolute top-0 right-0 h-40 w-40 bg-blue-50 blur-[80px] -z-10 pointer-events-none" />
             <div className="absolute bottom-0 left-0 h-32 w-32 bg-indigo-50 blur-[60px] -z-10 pointer-events-none" />

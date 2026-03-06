@@ -51,30 +51,31 @@ export default function AnalyticsPage() {
     return (
         <div className="w-full h-full px-2 lg:px-6 flex flex-col overflow-hidden">
             {/* ── Header ────────────────────────────────────────────── */}
-            <header className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 lg:mb-6 gap-3 flex-shrink-0 pl-12 lg:pl-0">
-                <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl shadow-[0_4px_14px_0_rgba(139,92,246,0.3)] text-white flex-shrink-0">
-                        <BarChart3 size={22} />
+            <header className="flex flex-col sm:flex-row sm:items-center justify-between pt-2 sm:pt-4 mb-5 lg:mb-6 gap-3 sm:gap-4 flex-shrink-0 w-full relative z-20">
+                <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
+                    <div className="p-2 sm:p-2.5 bg-gradient-to-br from-violet-500 to-purple-600 rounded-[14px] sm:rounded-2xl shadow-[0_4px_14px_0_rgba(139,92,246,0.3)] text-white flex-shrink-0">
+                        <BarChart3 size={18} className="sm:hidden" />
+                        <BarChart3 size={22} className="hidden sm:block" />
                     </div>
-                    <div>
-                        <h1 className="text-2xl lg:text-3xl font-black tracking-tight text-slate-900">
+                    <div className="flex flex-col flex-1 min-w-0 pr-2 sm:pr-0">
+                        <h1 className="text-lg sm:text-2xl lg:text-3xl font-black tracking-tight text-slate-900 leading-tight truncate">
                             <span className="bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">Analitik</span>
                         </h1>
-                        <p className="text-xs lg:text-sm text-slate-400 font-medium mt-0.5">Daskbor performa klinik secara real-time</p>
+                        <p className="text-[11px] sm:text-xs lg:text-sm text-slate-500 font-medium mt-0.5 truncate bg-white/60 backdrop-blur-sm self-start px-1.5 -ml-1.5 rounded-md">Dasbor performa klinik secara real-time</p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2 lg:gap-4 flex-wrap">
+                <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 flex-wrap w-full sm:w-auto overflow-x-auto sm:overflow-visible pb-2 sm:pb-0 scrollbar-hide -ml-1 pl-1 sm:pl-0 sm:ml-0 translate-y-[-2px] sm:translate-y-0">
                     {/* Time Filter */}
-                    <div className="relative group">
-                        <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
-                        <div className="relative flex items-center bg-white/60 backdrop-blur-xl rounded-2xl p-1 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_2px_10px_-3px_rgba(0,0,0,0.02)] border border-white/50">
+                    <div className="relative group flex-shrink-0">
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-[14px] blur opacity-0 group-hover:opacity-100 transition duration-500"></div>
+                        <div className="relative flex items-center bg-white/70 backdrop-blur-xl rounded-[12px] shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_2px_10px_-3px_rgba(0,0,0,0.02)] border border-slate-200/50 p-1">
                             {["Hari Ini", "7 Hari Terakhir", "Bulan Ini"].map((range) => (
                                 <button
                                     key={range}
                                     onClick={() => setTimeRange(range)}
                                     className={cn(
-                                        "px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300",
+                                        "px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-[10px] text-[10px] sm:text-xs font-bold transition-all duration-300 whitespace-nowrap",
                                         timeRange === range
                                             ? "bg-white text-blue-600 shadow-sm scale-105"
                                             : "text-slate-500 hover:text-slate-700 hover:bg-white/50"
@@ -87,10 +88,11 @@ export default function AnalyticsPage() {
                     </div>
 
                     {/* Export Button */}
-                    <button className="btn-gradient p-2.5 px-4 rounded-2xl text-white font-bold flex items-center gap-2 text-sm shadow-[0_4px_14px_0_rgba(0,92,255,0.39)] hover:scale-105 transition-transform group relative overflow-hidden">
+                    <button className="bg-gradient-to-r from-blue-600 to-indigo-600 p-2 sm:p-2.5 px-3 sm:px-4 rounded-[12px] text-white font-bold flex items-center gap-2 text-[11px] sm:text-sm shadow-[0_4px_14px_0_rgba(0,92,255,0.39)] hover:scale-105 transition-transform group relative overflow-hidden flex-shrink-0">
                         <div className="absolute inset-0 w-full h-full bg-white/20 -translate-x-full group-hover:animate-shimmer" />
-                        <Download size={18} className="relative z-10" />
-                        <span className="relative z-10 hidden sm:inline">Export Report</span>
+                        <Download size={14} className="relative z-10 sm:hidden" />
+                        <Download size={18} className="relative z-10 hidden sm:block" />
+                        <span className="relative z-10">Export Report</span>
                     </button>
                 </div>
             </header>

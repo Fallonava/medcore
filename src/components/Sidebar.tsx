@@ -23,7 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 
-const navigation = [
+export const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard, resource: "dashboard" },
   { name: "Jadwal", href: "/schedules", icon: Calendar, resource: "schedules" },
   { name: "Dokter", href: "/doctors", icon: Users, resource: "doctors" },
@@ -31,37 +31,21 @@ const navigation = [
   { name: "Analitik", href: "/analytics", icon: BarChart3, resource: "analytics" },
 ];
 
-const systems = [
+export const systems = [
   { name: "Otomatisasi", href: "/automation", icon: Bot, resource: "automation" },
   { name: "Monitor Queue", href: "/automation/queue-monitor", icon: Zap, resource: "automation" },
   { name: "Kontrol Layar", href: "/display-control", icon: Settings, resource: "display-control" },
   { name: "Layar Langsung", href: "/tv.html", icon: Tv, external: true, resource: null },
 ];
 
-const admin = [
+export const admin = [
   { name: "Manajemen Akses", href: "/settings/access", icon: Shield, resource: "access" },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const { user, canRead, isSuperAdmin, loading, logout } = useAuth();
-
-  // Close sidebar on route change
-  useEffect(() => {
-    setMobileOpen(false);
-  }, [pathname]);
-
-  // Prevent body scroll when mobile sidebar is open
-  useEffect(() => {
-    if (mobileOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-    }
-    return () => { document.body.style.overflow = ''; };
-  }, [mobileOpen]);
+  const { user, canRead, isSuperAdmin, logout } = useAuth();
 
   const handleLogout = async () => {
     await logout();
@@ -73,7 +57,16 @@ export function Sidebar() {
   };
 
   const renderLink = (item: { name: string; href: string; icon: React.ElementType; external?: boolean; resource?: string | null }) => {
-    const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+    // Determine if any link in the sidebar matches the current pathname exactly
+    const allLinks = [...navigation, ...systems, ...admin];
+    const hasExactMatch = allLinks.some(l => l.href === pathname);
+    
+    // If an exact match exists, only highlight the item that matches exactly.
+    // Otherwise, use prefix matching for sub-pages.
+    const isActive = hasExactMatch 
+      ? pathname === item.href 
+      : pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+      
     const linkClassName = cn(
       "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition-all duration-300",
       isActive
@@ -105,7 +98,7 @@ export function Sidebar() {
 
   const sidebarContent = (
     <>
-      <div>
+      <div className="flex-1 overflow-y-auto no-scrollbar">
         <div className="flex items-center gap-3 px-2 mb-8">
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold shadow-lg shadow-primary/20">
             <Activity size={20} />
@@ -143,19 +136,19 @@ export function Sidebar() {
         )}
       </div>
 
-      <div className="mt-auto pt-4">
+      <div className="mt-auto pt-6 border-t border-black/[0.05]">
         <div className="flex items-center justify-between px-2">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="h-8 w-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex-shrink-0 flex items-center justify-center text-white font-bold text-xs">
+            <div className="h-9 w-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex-shrink-0 flex items-center justify-center text-white font-bold text-sm shadow-md">
               {user?.name?.charAt(0)?.toUpperCase() || "?"}
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-medium truncate">{user?.name || "Memuat..."}</p>
-              <p className="text-xs text-muted-foreground truncate">{user?.roleName || ""}</p>
+              <p className="text-sm font-bold text-slate-900 truncate">{user?.name || "Memuat..."}</p>
+              <p className="text-[10px] text-muted-foreground font-bold uppercase truncate">{user?.roleName || ""}</p>
             </div>
           </div>
-          <button onClick={handleLogout} className="p-2 text-muted-foreground hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-all flex-shrink-0" title="Logout">
-            <LogOut size={16} />
+          <button onClick={handleLogout} className="p-2.5 text-muted-foreground hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all flex-shrink-0" title="Logout">
+            <LogOut size={18} />
           </button>
         </div>
       </div>
@@ -164,39 +157,7 @@ export function Sidebar() {
 
   return (
     <>
-      {/* ═══ MOBILE HAMBURGER BUTTON ═══ */}
-      <button
-        onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2.5 rounded-2xl bg-white/80 backdrop-blur-xl shadow-md border border-white/50 text-slate-600 hover:text-slate-900 transition-all active:scale-95"
-        aria-label="Buka menu"
-      >
-        <Menu size={22} />
-      </button>
-
-      {/* ═══ MOBILE OVERLAY ═══ */}
-      {mobileOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black/30 backdrop-blur-sm z-40 transition-all"
-          onClick={() => setMobileOpen(false)}
-        />
-      )}
-
-      {/* ═══ MOBILE SIDEBAR DRAWER ═══ */}
-      <div className={cn(
-        "lg:hidden fixed inset-y-0 left-0 z-50 w-72 flex flex-col justify-between super-glass p-4 shadow-2xl transition-transform duration-300 ease-out",
-        mobileOpen ? "translate-x-0" : "-translate-x-full"
-      )}>
-        <button
-          onClick={() => setMobileOpen(false)}
-          className="absolute top-4 right-4 p-2 rounded-xl hover:bg-black/5 text-slate-400 hover:text-slate-700 transition-all"
-          aria-label="Tutup menu"
-        >
-          <X size={20} />
-        </button>
-        {sidebarContent}
-      </div>
-
-      {/* ═══ DESKTOP SIDEBAR (always visible) ═══ */}
+      {/* ═══ DESKTOP SIDEBAR (always visible on LG+) ═══ */}
       <div className="hidden lg:flex h-screen w-64 flex-col justify-between super-glass p-4 transition-colors duration-300 shadow-[4px_0_24px_-8px_rgba(0,0,0,0.05)] z-20 relative flex-shrink-0">
         {sidebarContent}
       </div>

@@ -142,13 +142,13 @@ export function BroadcastControl() {
     const hasActiveBroadcast = rules.some(r => r.active);
 
     return (
-        <div className="relative rounded-3xl border border-slate-200 bg-white p-6 h-full flex flex-col overflow-hidden shadow-lg shadow-slate-200/60 transition-all duration-500 hover:border-slate-300 hover:shadow-xl group">
+        <div className="relative rounded-3xl border border-slate-200 bg-white p-6 flex flex-col overflow-hidden shadow-lg shadow-slate-200/60 transition-all duration-500 hover:border-slate-300 hover:shadow-xl group">
             {/* Soft ambient glow */}
             <div className="absolute -top-24 -right-24 h-56 w-56 bg-orange-50 blur-[80px] -z-10 pointer-events-none" />
 
             {/* Header */}
-            <div className="flex items-center justify-between mb-5 relative z-10">
-                <div className="flex items-center gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 relative z-10">
+                <div className="flex items-center gap-3 sm:gap-4">
                     <div className="relative flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-orange-500 to-red-500 shadow-lg shadow-orange-300/40">
                         <div className="absolute inset-0 rounded-2xl border border-white/30" />
                         <Megaphone className="text-white h-7 w-7" />
@@ -158,7 +158,7 @@ export function BroadcastControl() {
                         <p className="text-[11px] text-orange-600 font-mono uppercase tracking-widest mt-0.5 font-semibold">Popup Display Control</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 w-full sm:w-auto mt-1 sm:mt-0">
                     {hasActiveBroadcast && (
                         <button
                             onClick={handleStopAll}
@@ -181,7 +181,7 @@ export function BroadcastControl() {
             {/* Quick Presets */}
             <div className="mb-5 relative z-10">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] block mb-2.5 px-1">Template Cepat</span>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
                     {PRESETS.map((preset, i) => {
                         const Icon = preset.icon;
                         return (
@@ -250,8 +250,8 @@ export function BroadcastControl() {
             </div>
 
             {/* Rules List */}
-            <div className="flex-1 overflow-y-auto space-y-3 -mr-2 pr-2 hide-scrollbar relative z-10">
-                <div className="flex items-center justify-between px-1 mb-1">
+            <div className="space-y-3 relative z-10 mt-4">
+                <div className="flex items-center justify-between px-1 mb-2">
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em]">Broadcast Rules</span>
                     <span className="text-[10px] font-mono text-slate-400">{rules.length} total</span>
                 </div>

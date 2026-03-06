@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import useSWR from "swr";
 import { RefreshCw, Filter } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface AutomationLog {
     id: bigint;
@@ -46,12 +47,12 @@ export default function AutomationLogsPage() {
     const types = Array.from(new Set(logs.map(l => l.type)));
 
     return (
-        <div className="p-6 max-w-5xl mx-auto">
-            <header className="flex items-center justify-between mb-6">
-                <h1 className="text-2xl font-bold">Automation Logs & Metrics</h1>
+        <div className="p-4 sm:p-6 max-w-5xl mx-auto">
+            <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 sm:mb-6">
+                <h1 className="text-xl sm:text-2xl font-bold">Automation Logs & Metrics</h1>
                 <button
                     onClick={() => mutate()}
-                    className="flex items-center gap-2 px-3 py-2 rounded bg-blue-600 text-white text-sm"
+                    className="flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 transition-colors text-white text-sm font-semibold w-full sm:w-auto"
                 >
                     <RefreshCw size={16} /> Refresh
                 </button>
@@ -70,22 +71,22 @@ export default function AutomationLogsPage() {
             )}
 
             {/* Metrics Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div className="p-4 border rounded bg-blue-50">
-                    <div className="text-xs text-slate-500 mb-1">Total Runs</div>
-                    <div className="text-2xl font-bold">{metrics.totalRuns}</div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
+                <div className="p-3 sm:p-4 border rounded-xl bg-blue-50/50">
+                    <div className="text-[10px] sm:text-xs text-slate-500 mb-1 font-semibold uppercase tracking-wider">Total Runs</div>
+                    <div className="text-xl sm:text-2xl font-bold text-blue-900">{metrics.totalRuns}</div>
                 </div>
-                <div className="p-4 border rounded bg-green-50">
-                    <div className="text-xs text-slate-500 mb-1">Success Rate</div>
-                    <div className="text-2xl font-bold">{metrics.successRate}%</div>
+                <div className="p-3 sm:p-4 border rounded-xl bg-green-50/50">
+                    <div className="text-[10px] sm:text-xs text-slate-500 mb-1 font-semibold uppercase tracking-wider">Success</div>
+                    <div className="text-xl sm:text-2xl font-bold text-green-900">{metrics.successRate}%</div>
                 </div>
-                <div className="p-4 border rounded bg-purple-50">
-                    <div className="text-xs text-slate-500 mb-1">Applied Updates</div>
-                    <div className="text-2xl font-bold">{metrics.totalApplied}</div>
+                <div className="p-3 sm:p-4 border rounded-xl bg-purple-50/50">
+                    <div className="text-[10px] sm:text-xs text-slate-500 mb-1 font-semibold uppercase tracking-wider">Applied</div>
+                    <div className="text-xl sm:text-2xl font-bold text-purple-900">{metrics.totalApplied}</div>
                 </div>
-                <div className="p-4 border rounded bg-orange-50">
-                    <div className="text-xs text-slate-500 mb-1">Avg Duration (ms)</div>
-                    <div className="text-2xl font-bold">{metrics.avgDuration}</div>
+                <div className="p-3 sm:p-4 border rounded-xl bg-orange-50/50">
+                    <div className="text-[10px] sm:text-xs text-slate-500 mb-1 font-semibold uppercase tracking-wider">Avg Time <span className="lowercase normal-case sm:hidden">(ms)</span></div>
+                    <div className="text-xl sm:text-2xl font-bold text-orange-900">{metrics.avgDuration} <span className="text-sm font-medium text-slate-500 hidden sm:inline">ms</span></div>
                 </div>
             </div>
 
@@ -124,23 +125,25 @@ export default function AutomationLogsPage() {
                     return (
                         <div
                             key={log.id.toString()}
-                            className={`p-4 border rounded ${
-                                isError ? 'bg-red-50 border-red-200' :
-                                isRun ? 'bg-green-50 border-green-200' :
-                                'bg-gray-50'
-                            }`}
+                            className={cn(
+                                "p-3 sm:p-4 border rounded-xl transition-colors",
+                                isError ? 'bg-red-50/50 border-red-200/60' :
+                                isRun ? 'bg-green-50/50 border-green-200/60' :
+                                'bg-slate-50/50 border-slate-200'
+                            )}
                         >
-                            <div className="flex items-center justify-between mb-2">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
                                 <div className="flex items-center gap-2">
-                                    <span className={`px-2 py-1 rounded text-xs font-semibold ${
+                                    <span className={cn(
+                                        "px-2 py-1 rounded-md text-[10px] font-bold tracking-widest",
                                         isError ? 'bg-red-200 text-red-800' :
                                         isRun ? 'bg-green-200 text-green-800' :
                                         'bg-slate-200 text-slate-800'
-                                    }`}>
+                                    )}>
                                         {log.type.toUpperCase()}
                                     </span>
                                 </div>
-                                <div className="text-xs text-slate-500">
+                                <div className="text-[10px] sm:text-xs text-slate-500 font-medium whitespace-nowrap">
                                     {new Date(log.createdAt).toLocaleString()}
                                 </div>
                             </div>

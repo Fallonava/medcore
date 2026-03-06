@@ -100,7 +100,7 @@ export function ActivityStream() {
     }, [shifts, doctors, broadcasts]);
 
     return (
-        <div className="relative rounded-3xl border border-slate-200 bg-white p-6 h-full flex flex-col group overflow-hidden shadow-lg shadow-slate-200/60 transition-all duration-500 hover:border-slate-300 hover:shadow-xl">
+        <div className="relative rounded-3xl border border-slate-200 bg-white p-6 flex flex-col group overflow-hidden shadow-lg shadow-slate-200/60 transition-all duration-500 hover:border-slate-300 hover:shadow-xl">
             {/* Soft ambient glow */}
             <div className="absolute top-0 right-0 h-32 w-32 bg-violet-50 blur-[60px] -z-10 pointer-events-none" />
 
@@ -116,7 +116,7 @@ export function ActivityStream() {
             </div>
 
             {/* Timeline */}
-            <div className="flex-1 overflow-y-auto relative pr-1 -mr-1 z-10">
+            <div className="relative z-10 mt-2">
                 <div className="absolute left-[11px] top-2 bottom-2 w-px bg-gradient-to-b from-slate-200 via-slate-100 to-transparent" />
 
                 <div className="space-y-4 pb-2">

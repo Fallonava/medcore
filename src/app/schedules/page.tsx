@@ -22,44 +22,45 @@ export default function SchedulesPage() {
     return (
         <div className="w-full h-full px-2 lg:px-6 flex flex-col overflow-hidden">
             {/* Header */}
-            <header className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 lg:mb-6 gap-3 flex-shrink-0 pl-12 lg:pl-0">
-                <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-[0_4px_14px_0_rgba(0,92,255,0.3)] text-white flex-shrink-0">
-                        <CalendarIcon size={22} />
+            <header className="flex items-center justify-between pt-2 sm:pt-4 mb-5 lg:mb-6 gap-2 sm:gap-4 flex-shrink-0 w-full relative z-20 overflow-hidden">
+                <div className="flex items-center gap-2 sm:gap-4 min-w-0 pr-1">
+                    <div className="p-2 sm:p-2.5 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-[14px] sm:rounded-2xl shadow-[0_4px_14px_0_rgba(0,92,255,0.3)] text-white flex-shrink-0">
+                        <CalendarIcon size={18} className="sm:hidden" />
+                        <CalendarIcon size={22} className="hidden sm:block" />
                     </div>
-                    <div>
-                        <h1 className="text-2xl lg:text-3xl font-black tracking-tight text-slate-900">
+                    <div className="flex flex-col min-w-0">
+                        <h1 className="text-base sm:text-2xl lg:text-3xl font-black tracking-tight text-slate-900 leading-tight truncate">
                             Jadwal <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Dokter</span>
                         </h1>
-                        <p className="text-xs lg:text-sm text-slate-400 font-medium mt-0.5">Kelola jadwal mingguan dan shift dokter</p>
+                        <p className="hidden sm:block text-[11px] sm:text-xs lg:text-sm text-slate-500 font-medium mt-0.5 truncate bg-white/60 backdrop-blur-sm self-start px-1.5 -ml-1.5 rounded-md">Kelola jadwal mingguan dan shift dokter</p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2 lg:gap-4 flex-wrap">
-                    <div className="relative group hidden md:block">
-                        <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl blur opacity-0 group-focus-within:opacity-100 transition duration-500"></div>
+                <div className="flex items-center justify-end gap-2 sm:gap-3 lg:gap-4 flex-nowrap flex-shrink-0 w-auto overflow-x-auto sm:overflow-visible pb-1 sm:pb-0 scrollbar-hide -ml-1 pl-1 sm:pl-0 sm:ml-0">
+                    <div className="relative group hidden lg:block flex-shrink-0">
+                        <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-[14px] blur opacity-0 group-focus-within:opacity-100 transition duration-500"></div>
                         <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
                             <input
                                 type="text"
                                 placeholder="Search doctor or shift..."
-                                className="bg-white/40 backdrop-blur-xl rounded-2xl pl-10 pr-4 py-2.5 text-sm text-foreground focus:border-blue-500/50 outline-none transition-all shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_2px_10px_-3px_rgba(0,0,0,0.02)] focus:bg-white/60 w-56 lg:w-72 placeholder:text-muted-foreground"
+                                className="bg-white/70 backdrop-blur-xl rounded-[12px] pl-9 pr-4 py-2 text-sm text-slate-700 focus:border-blue-500/30 outline-none transition-all shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_2px_10px_-3px_rgba(0,0,0,0.02)] focus:bg-white w-48 xl:w-56 placeholder:text-slate-400 border border-slate-200/50"
                             />
                         </div>
                     </div>
 
-                    <button className="relative p-2.5 bg-white/40 backdrop-blur-xl rounded-2xl text-muted-foreground hover:text-foreground hover:bg-white/60 hover:shadow-[0_4px_14px_0_rgba(0,0,0,0.05)] transition-all group shadow-[inset_0_1px_1px_rgba(255,255,255,0.8)]">
-                        <Bell className="h-5 w-5 group-hover:animate-wiggle" />
-                        <span className="absolute top-1.5 right-1.5 h-2.5 w-2.5 rounded-full bg-blue-500"></span>
+                    <button className="relative p-2 flex-shrink-0 bg-white/70 backdrop-blur-xl rounded-[12px] text-slate-400 hover:text-slate-600 hover:bg-white hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] transition-all group border border-slate-200/50 shadow-sm">
+                        <Bell className="h-[18px] w-[18px] sm:h-5 sm:w-5 group-hover:animate-wiggle" />
+                        <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-blue-500 shadow-[0_0_4px_rgba(59,130,246,0.6)]"></span>
                     </button>
 
-                    <div className="flex items-center gap-3 pl-5">
-                        <div className="text-right hidden md:block">
-                            <p className="text-sm font-bold text-foreground">Dr. Admin</p>
-                            <p className="text-[11px] text-primary font-semibold">Super Admin</p>
+                    <div className="flex items-center gap-2 sm:gap-3 lg:pl-4 border-l border-slate-200/60 ml-1 pl-3 lg:ml-0 flex-shrink-0">
+                        <div className="text-right hidden sm:block">
+                            <p className="text-[11px] sm:text-xs font-extrabold text-slate-800 leading-tight">Dr. Admin</p>
+                            <p className="text-[9px] sm:text-[10px] text-blue-600 font-semibold uppercase tracking-wider mt-0.5">Super Admin</p>
                         </div>
-                        <Avatar className="h-10 w-10 shadow-sm hover:scale-105 transition-transform duration-300">
-                            <AvatarFallback className="bg-gradient-to-tr from-blue-500 to-cyan-400 text-xs font-bold text-white shadow-inner">AD</AvatarFallback>
+                        <Avatar className="h-8 w-8 sm:h-9 sm:w-9 shadow-sm hover:scale-105 transition-transform duration-300 ring-2 ring-white">
+                            <AvatarFallback className="bg-gradient-to-tr from-blue-500 to-cyan-400 text-[10px] sm:text-xs font-bold text-white shadow-inner">AD</AvatarFallback>
                         </Avatar>
                     </div>
                 </div>

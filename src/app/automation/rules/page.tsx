@@ -65,12 +65,12 @@ export default function AutomationRulesPage() {
     };
 
     return (
-        <div className="p-6 max-w-4xl mx-auto">
-            <header className="flex items-center justify-between mb-6">
-                <h1 className="text-2xl font-bold">Automation Rules</h1>
+        <div className="p-4 sm:p-6 max-w-4xl mx-auto">
+            <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 sm:mb-6">
+                <h1 className="text-xl sm:text-2xl font-bold">Automation Rules</h1>
                 <button
                     onClick={() => openEditor()}
-                    className="btn-gradient px-4 py-2 rounded-xl text-white flex items-center gap-2"
+                    className="btn-gradient px-4 py-2 rounded-xl text-white flex items-center justify-center gap-2 text-sm sm:text-base w-full sm:w-auto"
                 >
                     <Plus size={16} /> New Rule
                 </button>
@@ -82,14 +82,14 @@ export default function AutomationRulesPage() {
             )}
             <div className="space-y-4">
                 {rules.map(rule => (
-                    <div key={rule.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div key={rule.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-xl gap-4">
                         <div>
-                            <p className="font-semibold">{rule.name}</p>
-                            <p className="text-sm text-slate-500">{rule.active ? 'Active' : 'Inactive'}</p>
+                            <p className="font-semibold text-sm sm:text-base">{rule.name}</p>
+                            <p className="text-xs sm:text-sm text-slate-500">{rule.active ? 'Active' : 'Inactive'}</p>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <button onClick={() => openEditor(rule)} className="text-blue-600 hover:text-blue-800"><Edit2 /></button>
-                            <button onClick={() => deleteRule(rule.id)} className="text-red-600 hover:text-red-800"><Trash2 /></button>
+                        <div className="flex items-center justify-end gap-3 sm:gap-2 border-t sm:border-t-0 pt-3 sm:pt-0 mt-3 sm:mt-0">
+                            <button onClick={() => openEditor(rule)} className="text-blue-600 hover:text-blue-800 p-2 sm:p-0"><Edit2 size={18} className="sm:w-5 sm:h-5" /></button>
+                            <button onClick={() => deleteRule(rule.id)} className="text-red-600 hover:text-red-800 p-2 sm:p-0"><Trash2 size={18} className="sm:w-5 sm:h-5" /></button>
                         </div>
                     </div>
                 ))}
@@ -152,7 +152,7 @@ export default function AutomationRulesPage() {
                             <label className="text-sm">Active</label>
                         </div>
                     </div>
-                    <div className="mt-6 flex justify-end gap-3">
+                    <div className="mt-6 flex flex-col sm:flex-row justify-end gap-3">
                         <button
                             onClick={async () => {
                                 if (!editing) return;
@@ -168,10 +168,10 @@ export default function AutomationRulesPage() {
                                     alert('Preview failed');
                                 }
                             }}
-                            className="px-4 py-2 rounded bg-yellow-500 text-white"
+                            className="px-4 py-2 rounded-xl bg-yellow-500 text-white font-semibold text-sm w-full sm:w-auto text-center"
                         >Preview</button>
-                        <button onClick={closeEditor} className="px-4 py-2 rounded bg-slate-200">Cancel</button>
-                        <button onClick={saveRule} className="px-4 py-2 rounded bg-blue-600 text-white">Save</button>
+                        <button onClick={closeEditor} className="px-4 py-2 rounded-xl bg-slate-200 font-semibold text-sm w-full sm:w-auto text-center">Cancel</button>
+                        <button onClick={saveRule} className="px-4 py-2 rounded-xl bg-blue-600 text-white font-semibold text-sm w-full sm:w-auto text-center">Save</button>
                     </div>
                     {preview && (
                         <div className="mt-4 p-3 bg-gray-50 border rounded">

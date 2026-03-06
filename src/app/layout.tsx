@@ -11,6 +11,8 @@ if (typeof window === 'undefined' && !process.env.VERCEL) {
 }
 import "./globals.css";
 import { Sidebar } from "@/components/Sidebar";
+import { BottomNav } from "@/components/BottomNav";
+import { MobileMenu } from "@/components/MobileMenu";
 import { OfflineSyncer } from "@/components/OfflineSyncer";
 
 import { SWRProvider } from "@/components/swr-provider";
@@ -55,9 +57,11 @@ export default function RootLayout({
           <AutomationRunner />
           <div className="flex h-screen bg-background overflow-hidden relative">
             <Sidebar />
-            <main className="flex-1 overflow-y-auto p-4 lg:p-8 pt-2 lg:pt-8 relative bg-white/50">
+            <main className="flex-1 overflow-y-auto p-4 lg:p-8 pt-2 lg:pt-8 pb-32 lg:pb-8 relative bg-white/50">
               {children}
             </main>
+            <BottomNav />
+            <MobileMenu />
           </div>
           </AuthProvider>
         </SWRProvider>

@@ -66,33 +66,37 @@ export default function LeavesPage() {
         <div className="w-full h-full flex flex-col px-2 lg:px-4">
 
             {/* ═══ HEADER ═══ */}
-            <header className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 lg:mb-6 gap-3 flex-shrink-0 pl-12 lg:pl-0">
-                <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl shadow-[0_4px_14px_0_rgba(16,185,129,0.3)] text-white flex-shrink-0">
-                        <CalendarDays size={22} />
+            <header className="flex flex-col sm:flex-row sm:items-center justify-between pt-2 sm:pt-4 mb-5 lg:mb-6 gap-3 sm:gap-4 flex-shrink-0 w-full relative z-20">
+                <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto">
+                    <div className="p-2 sm:p-2.5 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-[14px] sm:rounded-2xl shadow-[0_4px_14px_0_rgba(16,185,129,0.3)] text-white flex-shrink-0">
+                        <CalendarDays size={18} className="sm:hidden" />
+                        <CalendarDays size={22} className="hidden sm:block" />
                     </div>
-                    <div>
-                        <h1 className="text-2xl lg:text-3xl font-black tracking-tight text-slate-900">
+                    <div className="flex flex-col flex-1 min-w-0 pr-2 sm:pr-0">
+                        <h1 className="text-lg sm:text-2xl lg:text-3xl font-black tracking-tight text-slate-900 leading-tight truncate">
                             Jadwal <span className="bg-gradient-to-r from-emerald-500 to-teal-600 bg-clip-text text-transparent">Cuti</span>
                         </h1>
-                        <p className="text-xs lg:text-sm text-slate-400 font-medium mt-0.5">Kelola dan pantau jadwal cuti seluruh dokter</p>
+                        <p className="text-[11px] sm:text-xs lg:text-sm text-slate-500 font-medium mt-0.5 truncate bg-white/60 backdrop-blur-sm self-start px-1.5 -ml-1.5 rounded-md">Kelola dan pantau jadwal cuti seluruh dokter</p>
                     </div>
                 </div>
 
                 {/* Search */}
-                <div className="relative w-full md:w-72">
-                    {isSearching ? (
-                        <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500 h-4 w-4 animate-spin" />
-                    ) : (
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
-                    )}
-                    <input
-                        type="text"
-                        placeholder="Cari dokter..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full bg-white rounded-2xl pl-11 pr-4 py-3 text-sm font-medium text-slate-700 outline-none shadow-sm focus:shadow-md focus:ring-2 focus:ring-emerald-500/20 transition-all placeholder:text-slate-400"
-                    />
+                <div className="relative w-full sm:w-auto flex-shrink-0 -ml-1 pl-1 sm:pl-0 sm:ml-0 translate-y-[-2px] sm:translate-y-0 group">
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500/20 to-teal-500/20 rounded-[14px] blur opacity-0 group-focus-within:opacity-100 transition duration-500"></div>
+                    <div className="relative">
+                        {isSearching ? (
+                            <Loader2 className="absolute left-3.5 top-1/2 -translate-y-1/2 text-emerald-500 h-4 w-4 animate-spin" />
+                        ) : (
+                            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4" />
+                        )}
+                        <input
+                            type="text"
+                            placeholder="Cari dokter..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full sm:w-48 xl:w-56 bg-white/70 backdrop-blur-xl rounded-[12px] pl-9 pr-4 py-2 text-sm font-semibold text-slate-700 outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_2px_10px_-3px_rgba(0,0,0,0.02)] focus:bg-white focus:ring-1 focus:ring-emerald-500/30 transition-all placeholder:text-slate-400 border border-slate-200/50"
+                        />
+                    </div>
                 </div>
             </header>
 

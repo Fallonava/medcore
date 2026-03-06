@@ -133,10 +133,10 @@ export function DoctorCard({ doctor, index, isSelected, onToggleSelect, onEdit, 
                 </div>
 
                 <div className="flex-1 min-w-0 pr-6" onDoubleClick={(e) => { e.stopPropagation(); onEdit(doctor); }}>
-                    <h3 className="font-extrabold text-slate-800 text-lg tracking-tight leading-tight truncate group-hover:text-blue-600 transition-colors">
+                    <h3 className="font-extrabold text-slate-800 text-lg tracking-tight leading-tight line-clamp-2 group-hover:text-blue-600 transition-colors">
                         {doctor.name}
                     </h3>
-                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.12em] truncate mt-1">
+                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-[0.12em] line-clamp-2 mt-1">
                         {doctor.specialty}
                     </p>
                     {timeRemaining && (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import useSWR, { mutate } from "swr";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Plus, Search, UserRound, Activity, Users, CheckSquare, Trash2, X, ChevronDown, Loader2 } from "lucide-react";
@@ -12,6 +12,65 @@ import { DoctorCard } from "@/components/doctors/DoctorCard";
 
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, DragOverlay, defaultDropAnimationSideEffects } from "@dnd-kit/core";
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from "@dnd-kit/sortable";
+
+// Custom Dropdown Component moved outside to prevent re-definitions on parent render
+const CustomDropdown = ({ value, options, onChange, icon }: any) => {
+    const [open, setOpen] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const selectedLabel = options.find((o: any) => o.value === value)?.label || value;
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+                setOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    return (
+        <div className="relative z-30" ref={containerRef}>
+            <button 
+                type="button"
+                onClick={() => setOpen(!open)}
+                className={cn(
+                    "w-full sm:w-auto flex items-center justify-between gap-1.5 sm:gap-2.5 bg-white/70 backdrop-blur-xl rounded-xl sm:rounded-[20px] px-3 sm:px-5 py-2 sm:py-3.5 text-[11px] sm:text-sm font-semibold text-slate-700 outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_2px_8px_-3px_rgba(0,0,0,0.05)] border border-white hover:bg-white focus:ring-4 focus:ring-blue-500/10 transition-all whitespace-nowrap",
+                    open && "ring-4 ring-blue-500/20 border-blue-500/30 bg-white shadow-md"
+                )}
+            >
+                <span className="flex items-center gap-1.5 sm:gap-2 truncate">{icon} {selectedLabel}</span>
+                <ChevronDown className={cn("w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-400 transition-transform duration-300 flex-shrink-0", open && "rotate-180")} />
+            </button>
+            
+            <div className={cn(
+                "absolute top-[calc(100%+8px)] left-0 w-full min-w-[200px] bg-white/95 backdrop-blur-2xl rounded-[24px] shadow-[0_20px_40px_-12px_rgba(0,0,0,0.15)] border border-white/50 p-2 transition-all duration-300 origin-top z-50 overflow-y-auto max-h-[300px] custom-scrollbar",
+                open ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
+            )}>
+                {options.map((opt: any) => (
+                    <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => { onChange(opt.value); setOpen(false); }}
+                        className={cn(
+                            "w-full text-left px-3 sm:px-4 py-2 sm:py-3 rounded-[12px] sm:rounded-[16px] text-xs sm:text-sm font-semibold transition-all flex items-center justify-between group/item",
+                            value === opt.value 
+                                ? "bg-blue-600 text-white shadow-md sm:shadow-lg shadow-blue-500/20" 
+                                : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                        )}
+                    >
+                        <span>{opt.label}</span>
+                        {value === opt.value ? (
+                            <div className="w-2 h-2 rounded-full bg-white animate-in zoom-in-50 duration-300" />
+                        ) : (
+                            <div className="w-1.5 h-1.5 rounded-full bg-slate-200 group-hover/item:bg-slate-300 transition-colors" />
+                        )}
+                    </button>
+                ))}
+            </div>
+        </div>
+    );
+};
 
 export default function DoctorsPage() {
     const { data } = useSWR<Doctor[]>('/api/doctors');
@@ -97,10 +156,6 @@ export default function DoctorsPage() {
                 // Delete single
                 await fetch(`/api/doctors?id=${deleteId}`, { method: 'DELETE' });
             } else if (selectedIds.size > 0) {
-                // Delete bulk
-                // Note: The /api/doctors bulk endpoint currently handles updates. 
-                // Since this might not be supported natively without a new endpoint, 
-                // we'll loop DELETE for simplicity, or we can use the same pattern.
                 for (const id of Array.from(selectedIds)) {
                     await fetch(`/api/doctors?id=${id}`, { method: 'DELETE' });
                 }
@@ -148,46 +203,6 @@ export default function DoctorsPage() {
         }
     };
 
-    // Custom Dropdown Component
-    const CustomDropdown = ({ value, options, onChange, icon }: any) => {
-        const [open, setOpen] = useState(false);
-        const selectedLabel = options.find((o: any) => o.value === value)?.label || value;
-
-        // Close on outside click is handled by a simple global listener or just blur (simplified for aesthetics)
-        return (
-            <div className="relative group/dd z-30" onMouseLeave={() => setOpen(false)}>
-                <button 
-                    onClick={() => setOpen(!open)}
-                    className="flex items-center justify-between gap-3 bg-white/70 backdrop-blur-xl rounded-[20px] px-5 py-3 text-sm font-semibold text-slate-700 outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_2px_8px_-3px_rgba(0,0,0,0.05)] border border-white hover:bg-white focus:ring-2 focus:ring-blue-500/30 transition-all min-w-[160px]"
-                >
-                    <span className="flex items-center gap-2">{icon} {selectedLabel}</span>
-                    <ChevronDown size={14} className={cn("text-slate-400 transition-transform duration-300", open && "rotate-180")} />
-                </button>
-                
-                <div className={cn(
-                    "absolute top-[calc(100%+8px)] left-0 w-full min-w-[180px] bg-white/90 backdrop-blur-2xl rounded-[20px] shadow-[0_16px_40px_-12px_rgba(0,0,0,0.15)] border border-white p-1.5 transition-all duration-300 origin-top",
-                    open ? "opacity-100 scale-y-100 translate-y-0" : "opacity-0 scale-y-95 -translate-y-2 pointer-events-none"
-                )}>
-                    {options.map((opt: any) => (
-                        <button
-                            key={opt.value}
-                            onClick={() => { onChange(opt.value); setOpen(false); }}
-                            className={cn(
-                                "w-full text-left px-4 py-2.5 rounded-[14px] text-sm font-semibold transition-all flex items-center justify-between",
-                                value === opt.value 
-                                    ? "bg-blue-50/80 text-blue-600" 
-                                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                            )}
-                        >
-                            {opt.label}
-                            {value === opt.value && <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />}
-                        </button>
-                    ))}
-                </div>
-            </div>
-        );
-    };
-
     // ── DND Logic ──
     const handleDragStart = (event: any) => {
         setActiveId(event.active.id);
@@ -223,99 +238,116 @@ export default function DoctorsPage() {
     return (
         <div className="w-full h-full flex flex-col px-2 lg:px-4 relative">
             {/* ═══════════════════ HEADER ═══════════════════ */}
-            <header className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 lg:mb-8 gap-4 flex-shrink-0 pl-12 lg:pl-0 relative z-10 w-full rounded-[32px] p-1">
+            <header className="flex flex-col lg:flex-row lg:items-center justify-between mb-5 lg:mb-8 gap-4 lg:gap-6 flex-shrink-0 w-full relative z-20">
                 <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[300px] h-[150px] bg-blue-500/10 rounded-full blur-[60px] animate-pulse pointer-events-none" />
 
-                <div className="flex items-center gap-4 relative z-10">
-                    <div className="p-3.5 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-[22px] shadow-[0_12px_24px_-8px_rgba(79,70,229,0.7)] text-white flex-shrink-0 relative overflow-hidden group">
-                        <div className="absolute -inset-[100%] bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out" />
-                        <Users size={26} className="relative z-10 drop-shadow-md" />
+                <div className="flex items-center gap-3 sm:gap-4 relative w-full lg:w-auto">
+                    <div className="p-2 sm:p-3 bg-gradient-to-br from-blue-500 via-indigo-500 to-purple-600 rounded-[14px] sm:rounded-[22px] shadow-[0_10px_20px_-8px_rgba(79,70,229,0.7)] text-white flex-shrink-0 relative overflow-hidden group">
+                        <Users size={18} className="sm:hidden relative z-10" />
+                        <Users size={24} className="hidden sm:block sm:w-7 sm:h-7 relative z-10 drop-shadow-md" />
                     </div>
-                    <div>
-                        <h1 className="text-3xl lg:text-4xl font-black tracking-tight flex items-center gap-2">
-                            <span className="text-slate-900 drop-shadow-sm">Direktori</span>
-                            <span className="bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 bg-clip-text text-transparent bg-[length:200%_auto] animate-gradient">
-                                Dokter
-                            </span>
-                        </h1>
-                        <p className="text-sm lg:text-base text-slate-500/90 font-medium mt-1">
+                    <div className="flex flex-col flex-1 min-w-0">
+                        <div className="flex items-center justify-between lg:justify-start w-full">
+                            <h1 className="text-lg sm:text-2xl lg:text-3xl font-black tracking-tight flex items-center gap-1 sm:gap-2 truncate">
+                                <span className="text-slate-900">Direktori</span>
+                                <span className="bg-gradient-to-r from-blue-600 via-indigo-500 to-purple-600 bg-clip-text text-transparent">Dokter</span>
+                            </h1>
+                            {/* Mobile-only Compact Toggle Select All */}
+                            <button
+                                onClick={toggleSelectAll}
+                                className="lg:hidden bg-white/70 hover:bg-white backdrop-blur-xl rounded-xl p-2 shadow-sm border border-white text-slate-500 hover:text-blue-600 transition-all active:scale-95 flex-shrink-0"
+                            >
+                                <CheckSquare size={18} />
+                            </button>
+                        </div>
+                        <p className="text-[11px] sm:text-xs lg:text-sm text-slate-500 font-medium truncate mt-0.5 sm:mt-1">
                             Kelola profil dan jadwal tayang dokter secara real-time
                         </p>
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3 lg:gap-5 flex-wrap relative z-10">
+                <div className="relative z-10 w-full lg:w-auto -ml-1 pl-1 lg:pl-0">
                     <button
                         onClick={() => { setEditingDoctor(undefined); setIsFormOpen(true); }}
-                        className="bg-slate-900 text-white px-6 py-3.5 rounded-[24px] flex items-center gap-2.5 font-bold text-sm shadow-[0_8px_20px_-6px_rgba(15,23,42,0.6)] hover:shadow-[0_12px_28px_-6px_rgba(15,23,42,0.8)] hover:bg-slate-800 hover:-translate-y-1 transition-all duration-400 active:scale-95 group relative overflow-hidden ring-1 ring-slate-900/5"
+                        className="w-full sm:w-auto bg-slate-900 text-white px-5 sm:px-6 lg:px-7 py-2.5 sm:py-3 lg:py-3.5 rounded-[12px] sm:rounded-[18px] lg:rounded-[20px] flex items-center justify-center gap-2 font-bold text-xs sm:text-sm shadow-md sm:shadow-lg hover:bg-slate-800 hover:shadow-xl hover:-translate-y-0.5 transition-all active:scale-95"
                     >
-                        <Plus size={18} className="relative z-10 group-hover:rotate-90 transition-transform duration-500" />
-                        <span className="relative z-10 tracking-wide">Tambah Dokter</span>
+                        <Plus size={16} className="sm:w-[18px] sm:h-[18px] lg:w-5 lg:h-5" />
+                        <span>Tambah Dokter</span>
                     </button>
                 </div>
             </header>
 
             {/* ═══════════════════ TOOLBAR PENCARIAN & FILTER ═══════════════════ */}
-            <div className="flex flex-col md:flex-row items-center gap-3 mb-8 relative z-10 w-full flex-wrap">
-                {/* Kolom Pencarian */}
-                <div className="relative flex-1 min-w-[300px] w-full group">
+            <div className="flex flex-col xl:flex-row gap-3 xl:gap-4 mb-6 xl:mb-8 relative z-10 w-full items-center">
+                {/* Search Input */}
+                <div className="relative group overflow-hidden rounded-[18px] sm:rounded-[22px] w-full xl:flex-1 shadow-sm transition-all hover:shadow-md">
+                    <div className="absolute inset-0 bg-white/60 backdrop-blur-xl border border-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_2px_12px_-4px_rgba(0,0,0,0.05)] transition-all group-focus-within:shadow-[0_4px_20px_-4px_rgba(59,130,246,0.15)] group-focus-within:border-blue-500/30 group-hover:bg-white/80 z-0" />
                     {isSearching ? (
-                        <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 h-5 w-5 animate-spin" />
+                        <Loader2 className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500 h-4 w-4 sm:h-5 sm:w-5 animate-spin z-10" />
                     ) : (
-                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-5 w-5 group-focus-within:text-blue-500 transition-colors" />
+                        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 h-4 w-4 sm:h-5 sm:w-5 group-focus-within:text-blue-500 transition-colors z-10" />
                     )}
                     <input
                         type="text"
-                        placeholder="Cari dokter atau spesialisasi..."
-                        className="w-full bg-white/70 backdrop-blur-xl rounded-[20px] pl-12 pr-4 py-3 text-sm font-semibold text-slate-800 outline-none shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_2px_12px_-4px_rgba(0,0,0,0.05)] focus:bg-white/95 focus:ring-2 focus:ring-blue-500/30 transition-all placeholder:text-slate-400 border border-white"
+                        placeholder="Cari dokter..."
+                        className="relative z-10 w-full bg-transparent pl-10 sm:pl-11 pr-3 sm:pr-4 py-2.5 sm:py-3.5 text-[11px] sm:text-sm font-semibold text-slate-800 outline-none placeholder:text-slate-400/80 transition-all"
                         value={searchTerm}
                         onChange={e => setSearchTerm(e.target.value)}
                     />
                 </div>
 
-                {/* Filter Kategori */}
-                <CustomDropdown 
-                    value={catFilter} 
-                    onChange={setCatFilter}
-                    options={[
-                        { value: "Semua", label: "Semua Kategori" },
-                        { value: "Bedah", label: "Bedah" },
-                        { value: "NonBedah", label: "Non Bedah" },
-                    ]}
-                />
+                {/* Filters Row - Horizontal Scroll on Mobile, Grid on Desktop */}
+                <div className="flex flex-nowrap xl:grid xl:grid-cols-3 gap-3 xl:gap-3 overflow-x-auto xl:overflow-visible pb-4 pt-1 px-1 -mx-1 xl:mx-0 xl:px-0 sm:pb-4 xl:pb-0 no-scrollbar items-center min-h-[48px] xl:w-auto w-full snap-x snap-mandatory shrink-0">
+                    <div className="flex-shrink-0 snap-center min-w-[140px] sm:min-w-[160px]">
+                        <CustomDropdown 
+                            value={catFilter} 
+                            onChange={setCatFilter}
+                            options={[
+                                { value: "Semua", label: "Semua Kategori" },
+                                { value: "Bedah", label: "Bedah" },
+                                { value: "NonBedah", label: "Non Bedah" },
+                            ]}
+                        />
+                    </div>
 
-                {/* Filter Status */}
-                <CustomDropdown 
-                    value={statusFilter} 
-                    onChange={setStatusFilter}
-                    options={[
-                        { value: "Semua", label: "Semua Status" },
-                        { value: "Aktif", label: "Aktif (Tayang)" },
-                        { value: "Cuti", label: "Cuti" },
-                        { value: "Selesai", label: "Selesai" },
-                        { value: "TIDAK PRAKTEK", label: "Tidak Praktek" },
-                    ]}
-                />
+                    <div className="flex-shrink-0 snap-center min-w-[140px] sm:min-w-[160px]">
+                        <CustomDropdown 
+                            value={statusFilter} 
+                            onChange={setStatusFilter}
+                            options={[
+                                { value: "Semua", label: "Semua Status" },
+                                { value: "Aktif", label: "Aktif (Tayang)" },
+                                { value: "Cuti", label: "Cuti" },
+                                { value: "Selesai", label: "Selesai" },
+                                { value: "TIDAK PRAKTEK", label: "Tidak Praktek" },
+                            ]}
+                        />
+                    </div>
 
-                {/* Sort Mode */}
-                <CustomDropdown 
-                    value={sortMode} 
-                    onChange={setSortMode}
-                    options={[
-                        { value: "default", label: "Urutan Default (Awal)" },
-                        { value: "A-Z", label: "Abjad A-Z" },
-                        { value: "Z-A", label: "Abjad Z-A" },
-                    ]}
-                />
-                
-                {/* Bulk Select All */}
-                <button
-                    onClick={toggleSelectAll}
-                    title="Pilih Semua di layar"
-                    className="bg-white/70 hover:bg-white backdrop-blur-xl rounded-[20px] p-3 shadow-sm border border-white text-slate-500 hover:text-blue-600 transition-colors"
-                >
-                    <CheckSquare size={20} />
-                </button>
+                    <div className="flex-shrink-0 snap-center pr-4 xl:pr-0">
+                        <div className="flex items-center gap-2">
+                            <div className="min-w-[150px] sm:min-w-[170px]">
+                                <CustomDropdown 
+                                    value={sortMode} 
+                                    onChange={setSortMode}
+                                options={[
+                                    { value: "default", label: "Urutan Default" },
+                                    { value: "A-Z", label: "Abjad A-Z" },
+                                    { value: "Z-A", label: "Abjad Z-A" },
+                                ]}
+                            />
+                            </div>
+                            {/* Desktop only Select All Icon */}
+                            <button
+                                onClick={toggleSelectAll}
+                                title="Pilih Semua"
+                                className="hidden xl:flex items-center justify-center w-[46px] h-[46px] sm:w-[52px] sm:h-[52px] bg-white/70 hover:bg-white backdrop-blur-xl rounded-[18px] sm:rounded-[20px] shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_2px_8px_-3px_rgba(0,0,0,0.05)] border border-white text-slate-500 hover:text-blue-600 transition-all active:scale-95 flex-shrink-0 relative group"
+                            >
+                                <CheckSquare className="w-[18px] h-[18px] sm:w-5 sm:h-5 group-hover:scale-110 transition-transform" />
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* Warning if DND is disabled */}

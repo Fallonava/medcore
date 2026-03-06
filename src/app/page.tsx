@@ -201,35 +201,40 @@ export default function Home() {
   return (
     <div className="w-full h-full px-3 lg:px-6 flex flex-col overflow-hidden">
       {/* ═══════════ PREMIUM HEADER ═══════════ */}
-      <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between pt-4 mb-4 lg:mb-5 flex-shrink-0 gap-3 pl-12 lg:pl-0">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl shadow-[0_4px_14px_0_rgba(0,92,255,0.3)] text-white flex-shrink-0">
-            <Activity size={20} />
+      <header className="flex flex-col sm:flex-row items-start sm:items-center justify-between pt-3 sm:pt-4 mb-5 lg:mb-6 flex-shrink-0 gap-3 sm:gap-4 w-full relative z-20">
+        <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto -mt-0.5 sm:mt-0">
+          <div className="p-2 sm:p-2.5 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-[14px] sm:rounded-2xl shadow-[0_4px_14px_0_rgba(0,92,255,0.3)] text-white flex-shrink-0">
+            <Activity size={18} className="sm:hidden" />
+            <Activity size={20} className="hidden sm:block" />
           </div>
-          <div className="flex flex-col">
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-black tracking-tight text-slate-900 leading-tight">
+          <div className="flex flex-col flex-1 min-w-0 pr-2 sm:pr-0">
+            <div className="flex items-center justify-between sm:justify-start gap-2 w-full">
+              <h1 className="text-lg sm:text-2xl font-black tracking-tight text-slate-900 leading-tight truncate">
                 {greeting}, <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Admin</span>
               </h1>
               <button
                 onClick={handleLogout}
-                className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                className="p-1.5 sm:p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all sm:ml-2 border border-transparent"
                 title="Keluar / Logout"
               >
-                <Power size={16} strokeWidth={2.5} />
+                <Power size={18} strokeWidth={2.5} />
               </button>
             </div>
-            <p className="text-xs text-slate-400 font-medium mt-0.5">Berikut update terbaru klinik Anda hari ini.</p>
+            <p className="text-[11px] sm:text-xs text-slate-500 font-medium mt-0.5 truncate bg-white/60 backdrop-blur-sm self-start px-1.5 -ml-1.5 rounded-md">Ringkasan kondisi fasilitas hari ini</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 lg:gap-4 flex-wrap">
+        {/* Interactive Badges - Horizontal Scroll on Mobile */}
+        <div className="flex items-stretch sm:items-center gap-2 sm:gap-3 w-full sm:w-auto overflow-x-auto sm:overflow-visible pb-2 sm:pb-0 scrollbar-hide -ml-1 pl-1 sm:pl-0 sm:ml-0 translate-y-[-2px] sm:translate-y-0">
+          
           {/* Live Clock Widget */}
-          <LiveClock />
+          <div className="flex-shrink-0 flex items-center">
+            <LiveClock />
+          </div>
 
           {/* Live Connection Status */}
           <div className={cn(
-            "px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all border",
+            "px-2.5 py-1.5 rounded-[12px] text-[11px] sm:text-xs font-bold flex flex-shrink-0 items-center gap-1.5 transition-all border outline-none",
             sseStatus === 'connected'
               ? "bg-emerald-50 text-emerald-600 border-emerald-100"
               : sseStatus === 'reconnecting'
@@ -240,51 +245,49 @@ export default function Home() {
               ? <Wifi size={12} strokeWidth={2.5} />
               : <WifiOff size={12} strokeWidth={2.5} />}
             {sseStatus === 'connected' ? 'Live'
-              : sseStatus === 'reconnecting' ? 'Reconnecting...'
-                : 'Connecting...'}
+              : sseStatus === 'reconnecting' ? 'Recon...'
+                : 'Conn...'}
           </div>
 
-          {/* Automation Control */}
+          {/* Automation Switch */}
           <button
             onClick={toggleAutomation}
             className={cn(
-              "flex items-center gap-2 lg:gap-3 px-3 lg:px-5 py-2 lg:py-2.5 rounded-2xl transition-all active:scale-[0.97] group relative overflow-hidden",
+              "flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 flex-shrink-0 rounded-[12px] transition-all active:scale-[0.97] group relative overflow-hidden",
               automationEnabled
-                ? "btn-gradient shadow-[0_4px_14px_0_rgba(99,102,241,0.39)]"
-                : "bg-white/80 backdrop-blur-xl text-slate-600 hover:shadow-[0_6px_20px_rgba(0,0,0,0.06)] border border-white shadow-sm"
+                ? "bg-gradient-to-r from-indigo-500 to-violet-600 text-white shadow-[0_4px_12px_rgba(99,102,241,0.25)] border border-indigo-400/50"
+                : "bg-white text-slate-600 hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] border border-slate-200/80 shadow-sm"
             )}
           >
             {automationEnabled && <div className="absolute inset-0 w-full h-full bg-white/20 -translate-x-full group-hover:animate-shimmer" />}
-            <div className="relative z-10">
-              <Zap size={18} className={cn(
+            <div className="relative z-10 flex items-center gap-2">
+              <Zap size={14} className={cn(
                 "transition-all",
-                automationEnabled ? "fill-current text-white drop-shadow-[0_0_6px_rgba(167,139,250,0.8)]" : "group-hover:scale-110"
+                automationEnabled ? "fill-current text-white drop-shadow-[0_0_6px_rgba(167,139,250,0.8)]" : "group-hover:scale-110 text-slate-400"
               )} />
-              {automationEnabled && (
-                <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+              <div className="flex flex-col text-left">
+                <span className={cn("text-[11px] sm:text-xs font-extrabold leading-none tracking-wide", automationEnabled ? "text-white" : "")}>
+                  {automationEnabled ? "AI Aktif" : "AI Pasif"}
                 </span>
-              )}
-            </div>
-            <div className="text-left relative z-10">
-              <div className={cn("text-sm font-bold leading-tight", automationEnabled ? "text-white" : "")}>
-                {automationEnabled ? "AI Aktif" : "AI Nonaktif"}
-              </div>
-              <div className={cn("text-[10px] leading-tight", automationEnabled ? "text-violet-200" : "text-slate-400")}>
-                {automationEnabled
-                  ? `${todayDoctors.length} dokter • ${activeDocs.length} aktif`
-                  : "Klik untuk aktifkan"
-                }
+                {/* Desktop-only secondary text */}
+                <span className="text-[9px] font-medium leading-tight opacity-80 hidden sm:block mt-0.5">
+                  {automationEnabled ? "Sistem Otomatis" : "Manual Mode"}
+                </span>
               </div>
             </div>
+            {automationEnabled && (
+              <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500 shadow-[0_0_4px_rgba(34,197,94,0.8)]"></span>
+              </span>
+            )}
           </button>
 
-          <div className="h-8 w-px bg-slate-200 mx-1 hidden lg:block" />
+          <div className="h-7 w-px bg-slate-200/60 mx-1 hidden lg:block flex-shrink-0 self-center" />
 
-          {/* Search */}
-          <div className="relative group hidden lg:block">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl blur opacity-0 group-focus-within:opacity-100 transition duration-500"></div>
+          {/* Search (Desktop) */}
+          <div className="relative group hidden lg:block flex-shrink-0">
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-[14px] blur opacity-0 group-focus-within:opacity-100 transition duration-500"></div>
             <div className="relative">
               {isSearching ? (
                 <Loader2 className="absolute left-3.5 top-1/2 -translate-y-1/2 text-blue-500 h-4 w-4 animate-spin" />
@@ -296,7 +299,7 @@ export default function Home() {
                 placeholder="Cari dokter..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 pr-4 py-2.5 rounded-2xl bg-white/60 backdrop-blur-xl focus:bg-white/90 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_2px_10px_-3px_rgba(0,0,0,0.02)] transition-all text-sm w-56 outline-none focus:ring-1 focus:ring-blue-500/30 font-medium text-slate-700 placeholder:text-slate-400 border border-white/50"
+                className="pl-9 pr-4 py-2 rounded-[12px] bg-white/70 backdrop-blur-xl focus:bg-white shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_2px_10px_-3px_rgba(0,0,0,0.02)] transition-all text-sm w-48 xl:w-56 outline-none focus:ring-1 focus:ring-blue-500/30 font-semibold text-slate-700 placeholder:text-slate-400 border border-slate-200/50"
               />
             </div>
           </div>
@@ -307,7 +310,7 @@ export default function Home() {
       <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 pb-10 space-y-6">
 
         {/* ── STATS CARDS ─────────────────────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+        <div className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-5">
           {/* Stat 1: Dokter Bertugas */}
           <div className="super-glass-card p-5 rounded-[28px] shadow-sm relative overflow-hidden group border border-white/30">
             <div className="absolute top-0 right-0 w-28 h-28 bg-blue-500/10 rounded-full blur-3xl -mr-8 -mt-8 group-hover:bg-blue-500/20 transition-all duration-500"></div>
@@ -462,9 +465,9 @@ export default function Home() {
                     </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0 flex-1">
-                    <h4 className="font-bold text-sm text-slate-800 leading-tight group-hover:text-blue-600 transition-colors truncate">{doc.name}</h4>
+                    <h4 className="font-bold text-sm text-slate-800 leading-tight group-hover:text-blue-600 transition-colors line-clamp-2">{doc.name}</h4>
                     <div className="flex items-center gap-2 mt-1 flex-wrap">
-                      <p className="text-[11px] text-slate-400 font-medium">{doc.specialty}</p>
+                      <p className="text-[11px] text-slate-400 font-medium line-clamp-2">{doc.specialty}</p>
                       {(() => {
                         const activeShift = shifts.find(s =>
                           s.doctorId === doc.id && s.dayIdx === todayDayIdx &&

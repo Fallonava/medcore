@@ -16,30 +16,53 @@ export async function GET(request: Request) {
 
     const stream = new ReadableStream({
         start(controller) {
+            let isClosed = false;
+            const encoder = new TextEncoder();
+
             const send = (data: any) => {
-                controller.enqueue(`data: ${JSON.stringify(data)}\n\n`);
+                if (isClosed) return;
+                try {
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+                } catch (e) {
+                    cleanup();
+                }
             };
+
             const listener = (updates: any) => {
                 send({ type: 'doctors', updates });
             };
-            automationBroadcaster.on('doctors', listener);
-            let isClosed = false;
-            // keep-alive ping
-            const iv = setInterval(() => {
-                if (!isClosed) {
-                    try {
-                        controller.enqueue('event: ping\ndata: {}\n\n')
-                    } catch (e) {
-                        isClosed = true;
-                        clearInterval(iv);
-                    }
-                }
-            }, 25000);
-            (controller as any).oncancel = () => {
+
+            const cleanup = () => {
+                if (isClosed) return;
                 isClosed = true;
                 clearInterval(iv);
                 automationBroadcaster.off('doctors', listener);
+                try {
+                    controller.close();
+                } catch (e) {
+                    // Ignore errors if already closing/closed
+                }
             };
+
+            // keep-alive ping
+            const iv = setInterval(() => {
+                if (isClosed) return;
+                try {
+                    controller.enqueue(encoder.encode(': ping\n\n'));
+                } catch (e) {
+                    cleanup();
+                }
+            }, 25000);
+
+            automationBroadcaster.on('doctors', listener);
+            
+            // Link abort signal if request provides one
+            if (request.signal) {
+                request.signal.addEventListener('abort', cleanup);
+            }
+        },
+        cancel() {
+            // Standard cleanup on stream cancellation
         }
     });
 
