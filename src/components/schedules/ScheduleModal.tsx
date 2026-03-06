@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { X, Clock, Plus, Trash2, Save, Copy, Power, CalendarOff, Edit3, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Doctor, Shift } from "@/lib/data-service";
+import { ShiftCalendarGrid } from "./ShiftCalendarGrid";
 
 interface ScheduleModalProps {
     doctor: Doctor | null;
@@ -77,6 +78,32 @@ export function ScheduleModal({ doctor, shifts, isOpen, onClose, onUpdate }: Sch
             body: JSON.stringify({ ...form, id: editId, doctorId: doctor.id, doctor: doctor.name, dayIdx: activeDay })
         });
         onUpdate?.(); reset();
+    };
+
+    const updateShiftTime = async (id: string, newStartMatch: string) => {
+        const shiftToMove = shifts.find(s => s.id === id);
+        if (!shiftToMove) return;
+
+        const oldTimes = shiftToMove.formattedTime?.split('-').map(t => t.trim()) || ["08:00", "12:00"];
+        const oldStartStr = oldTimes[0] || "08:00";
+        const oldEndStr = oldTimes[1] || "12:00";
+
+        let oldStartH = parseInt(oldStartStr.split(':')[0] || '8');
+        let oldEndH = parseInt(oldEndStr.split(':')[0] || '12');
+        const duration = Math.max(1, oldEndH - oldStartH); // minimum 1 hour if parsed wrong
+
+        const newStartHStr = newStartMatch.split(':')[0];
+        const newStartH = parseInt(newStartHStr);
+        const newEndH = newStartH + duration;
+
+        const newFormattedTime = `${newStartHStr.padStart(2,'0')}:00-${String(newEndH).padStart(2,'0')}:00`;
+
+        await fetch('/api/shifts', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: shiftToMove.id, formattedTime: newFormattedTime })
+        });
+        onUpdate?.();
     };
 
     const del = async (id: string) => {
@@ -235,162 +262,88 @@ export function ScheduleModal({ doctor, shifts, isOpen, onClose, onUpdate }: Sch
                         </div>
                     )}
 
-                    {/* Shift List */}
+                    {/* Shift Calendar Grid */}
                     <div className="space-y-3">
-                        {dayShifts.map(s => {
-                            const off = (s.disabledDates || []).includes(today);
-                            const bar = BAR[s.color] || 'bg-blue-500';
-                            const light = LIGHT[s.color] || 'bg-blue-50';
-                            const exp = expandId === s.id;
-                            const isEditing = editId === s.id;
-
-                            if (isEditing) return (
-                                <div key={s.id} className="bg-blue-50 border border-blue-200 rounded-2xl p-5 space-y-4">
+                        {editId && (
+                           <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 space-y-4 mb-4">
+                                <div className="flex items-center justify-between">
                                     <p className="text-xs font-black text-blue-600 uppercase tracking-widest">Edit Shift</p>
-                                    <input autoFocus className="w-full bg-white rounded-xl px-4 py-3 text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-blue-300 border border-blue-100"
-                                        value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Nama shift"
-                                    />
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                        <div>
-                                            <label className="text-xs text-slate-500 font-semibold block mb-1.5">Jam Praktek</label>
-                                            <input className="w-full bg-white rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-blue-300 border border-blue-100"
-                                                value={form.formattedTime} onChange={e => setForm({ ...form, formattedTime: e.target.value })} placeholder="08:00-12:00"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-xs text-slate-500 font-semibold block mb-1.5">Jam Daftar</label>
-                                            <input className="w-full bg-white rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-blue-300 border border-blue-100"
-                                                value={form.registrationTime} onChange={e => setForm({ ...form, registrationTime: e.target.value })} placeholder="07:30"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-xs text-slate-500 font-semibold block mb-1.5">Status Bawaan</label>
-                                            <select className="w-full bg-white rounded-xl px-4 py-2 text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-blue-300 border border-blue-100"
-                                                value={form.statusOverride || ''} onChange={e => setForm({ ...form, statusOverride: (e.target.value as Doctor['status']) || null })}
-                                            >
-                                                <option value="">Standar (Buka)</option>
-                                                <option value="AKAN_BUKA">Akan Buka</option>
-                                                <option value="OPERASI">Operasi</option>
-                                                <option value="PENUH">Penuh</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <span className="text-xs font-semibold text-slate-500">Warna</span>
-                                        <div className="flex gap-2">
-                                            {COLORS.map(c => (
-                                                <button key={c.value} onClick={() => setForm({ ...form, color: c.value })}
-                                                    className={cn("w-7 h-7 rounded-lg transition-all", c.bg,
-                                                        form.color === c.value ? `ring-2 ring-offset-2 ${c.ring} scale-110` : "opacity-30 hover:opacity-60"
-                                                    )} />
-                                            ))}
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-3 pt-1">
-                                        <button onClick={reset} className="flex-1 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-500 text-sm font-semibold hover:bg-slate-50">Batal</button>
-                                        <button onClick={save} disabled={!form.title} className="flex-[2] py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-40 active:scale-[0.98]">
-                                            <Save size={14} /> Simpan
+                                    <div className="flex gap-2">
+                                        <button onClick={() => {
+                                            const s = shifts.find(x=>x.id===editId);
+                                            if(s) toggle(s);
+                                        }} className="p-1 hover:bg-white rounded" title="Toggle hari ini" type="button">
+                                            <Power size={14} className="text-emerald-500"/>
+                                        </button>
+                                        <button onClick={() => del(editId)} className="p-1 hover:bg-white rounded" title="Hapus" type="button">
+                                            <Trash2 size={14} className="text-red-500" />
                                         </button>
                                     </div>
                                 </div>
-                            );
-
-                            return (
-                                <div key={s.id} className="space-y-2">
-                                    <div className={cn(
-                                        "group flex items-center gap-4 p-4 rounded-2xl border transition-all",
-                                        off ? "opacity-40 bg-slate-50 border-slate-100" : `${light} border-transparent hover:shadow-md`
-                                    )}>
-                                        {/* Power toggle */}
-                                        <button onClick={() => toggle(s)} className={cn("shrink-0 p-2 rounded-xl transition-all",
-                                            off ? "bg-red-100 text-red-500 hover:bg-red-200" : "bg-white/70 text-emerald-500 hover:bg-white"
-                                        )} title={off ? "Aktifkan hari ini" : "Nonaktifkan hari ini"}>
-                                            <Power size={16} />
-                                        </button>
-
-                                        {/* Color bar */}
-                                        <div className={cn("w-1 self-stretch rounded-full shrink-0", bar)} />
-
-                                        {/* Info */}
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-bold text-slate-800">{s.title}</p>
-                                            <div className="flex items-center gap-2 text-xs text-slate-400 mt-1">
-                                                <Clock size={12} />
-                                                <span className="font-medium">{s.formattedTime}</span>
-                                                {s.registrationTime && <span className="text-slate-300">· Daftar {s.registrationTime}</span>}
-                                                {s.statusOverride && <span className="px-1.5 py-0.5 rounded-md bg-rose-50 text-rose-600 font-bold ml-1 border border-rose-100 uppercase text-[9px] translate-y-[-1px]">Auto: {s.statusOverride}</span>}
-                                            </div>
-                                        </div>
-
-                                        {/* Actions */}
-                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 backdrop-blur rounded-xl p-1 border border-slate-100 shadow-sm">
-                                            {(s.disabledDates || []).length > 0 ? (
-                                                <button onClick={() => setExpandId(exp ? null : s.id)}
-                                                    className="px-2 py-1.5 rounded-lg flex items-center gap-1 text-amber-600 bg-amber-50 text-[10px] font-bold hover:bg-amber-100 transition-colors" title="Lihat tanggal nonaktif">
-                                                    <CalendarOff size={12} /> {(s.disabledDates || []).length}
-                                                </button>
-                                            ) : (
-                                                <button onClick={() => setExpandId(exp ? null : s.id)} className="p-1.5 rounded-lg text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-colors" title="Set tanggal nonaktif">
-                                                    <CalendarOff size={14} />
-                                                </button>
-                                            )}
-                                            <button onClick={() => dup(s)} className="p-1.5 rounded-lg text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-colors" title="Duplikat">
-                                                <Copy size={14} />
-                                            </button>
-                                            <button onClick={() => { setForm({ title: s.title, formattedTime: s.formattedTime, registrationTime: s.registrationTime || "", color: s.color, statusOverride: s.statusOverride }); setEditId(s.id); setAdding(false); }}
-                                                className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-colors" title="Edit">
-                                                <Edit3 size={14} />
-                                            </button>
-                                            <button onClick={() => del(s.id)} className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors" title="Hapus">
-                                                <Trash2 size={14} />
-                                            </button>
-                                        </div>
+                                <input autoFocus className="w-full bg-white rounded-xl px-4 py-3 text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-blue-300 border border-blue-100"
+                                    value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Nama shift"
+                                />
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <div>
+                                        <label className="text-xs text-slate-500 font-semibold block mb-1.5">Jam Praktek</label>
+                                        <input className="w-full bg-white rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-blue-300 border border-blue-100"
+                                            value={form.formattedTime} onChange={e => setForm({ ...form, formattedTime: e.target.value })} placeholder="08:00-12:00"
+                                        />
                                     </div>
-
-                                    {/* Disabled dates panel */}
-                                    {exp && (
-                                        <div className="bg-slate-50 rounded-2xl p-4 space-y-3 ml-6 border border-slate-100">
-                                            <div className="flex items-center justify-between">
-                                                <p className="text-xs font-bold text-slate-500">Tanggal Nonaktif</p>
-                                                <input type="date" className="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-600 outline-none focus:ring-2 focus:ring-amber-200"
-                                                    onChange={e => { addDis(s, e.target.value); e.target.value = ''; }}
-                                                />
-                                            </div>
-                                            {(s.disabledDates || []).length === 0 ? (
-                                                <p className="text-xs text-slate-400 italic">Belum ada tanggal nonaktif</p>
-                                            ) : (
-                                                <div className="flex flex-wrap gap-2">
-                                                    {(s.disabledDates || []).sort().map(d => (
-                                                        <div key={d} className="flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 rounded-lg text-xs font-semibold border border-red-100">
-                                                            <span>{new Date(d + 'T00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
-                                                            <button onClick={() => rmDis(s, d)} className="hover:text-red-800"><X size={10} /></button>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                            <button onClick={() => setExpandId(null)} className="text-xs text-slate-400 font-semibold hover:text-slate-600 flex items-center gap-1">
-                                                <ChevronDown size={12} className="rotate-180" /> Tutup
-                                            </button>
-                                        </div>
-                                    )}
+                                    <div>
+                                        <label className="text-xs text-slate-500 font-semibold block mb-1.5">Jam Daftar</label>
+                                        <input className="w-full bg-white rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-blue-300 border border-blue-100"
+                                            value={form.registrationTime} onChange={e => setForm({ ...form, registrationTime: e.target.value })} placeholder="07:30"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-slate-500 font-semibold block mb-1.5">Status Bawaan</label>
+                                        <select className="w-full bg-white rounded-xl px-4 py-2 text-sm font-medium text-slate-700 outline-none focus:ring-2 focus:ring-blue-300 border border-blue-100"
+                                            value={form.statusOverride || ''} onChange={e => setForm({ ...form, statusOverride: (e.target.value as Doctor['status']) || null })}
+                                        >
+                                            <option value="">Standar (Buka)</option>
+                                            <option value="AKAN_BUKA">Akan Buka</option>
+                                            <option value="OPERASI">Operasi</option>
+                                            <option value="PENUH">Penuh</option>
+                                        </select>
+                                    </div>
                                 </div>
-                            );
-                        })}
-
-                        {dayShifts.length === 0 && !adding && (
-                            <div className="text-center py-16">
-                                <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                    <Clock size={24} className="text-slate-300" />
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xs font-semibold text-slate-500">Warna</span>
+                                    <div className="flex gap-2">
+                                        {COLORS.map(c => (
+                                            <button key={c.value} onClick={() => setForm({ ...form, color: c.value })}
+                                                className={cn("w-7 h-7 rounded-lg transition-all", c.bg,
+                                                    form.color === c.value ? `ring-2 ring-offset-2 ${c.ring} scale-110` : "opacity-30 hover:opacity-60"
+                                                )} />
+                                        ))}
+                                    </div>
                                 </div>
-                                <p className="text-sm text-slate-400 font-semibold mb-1">Belum ada shift di hari {DAYS[activeDay]}</p>
-                                <p className="text-xs text-slate-300 mb-4">Klik tombol di atas untuk menambahkan.</p>
-                                <button onClick={() => { setAdding(true); setForm(INIT); }}
-                                    className="px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold rounded-xl transition-colors inline-flex items-center gap-2 active:scale-95"
-                                >
-                                    <Plus size={16} /> Tambah Shift Pertama
-                                </button>
+                                <div className="flex gap-3 pt-1">
+                                    <button onClick={reset} className="flex-1 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-500 text-sm font-semibold hover:bg-slate-50">Batal</button>
+                                    <button onClick={save} disabled={!form.title} className="flex-[2] py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-40 active:scale-[0.98]">
+                                        <Save size={14} /> Simpan
+                                    </button>
+                                </div>
                             </div>
                         )}
+
+                        <ShiftCalendarGrid
+                            shifts={dayShifts}
+                            activeDay={activeDay}
+                            onUpdateShiftTime={updateShiftTime}
+                            onSlotClick={(timeStr) => {
+                                const startH = parseInt(timeStr.split(':')[0]);
+                                setForm({ ...INIT, formattedTime: `${timeStr}-${String(startH+4).padStart(2,'0')}:00` });
+                                setAdding(true);
+                                setEditId(null);
+                            }}
+                            onShiftClick={(s) => {
+                                setForm({ title: s.title, formattedTime: s.formattedTime, registrationTime: s.registrationTime || "", color: s.color, statusOverride: s.statusOverride });
+                                setEditId(s.id);
+                                setAdding(false);
+                            }}
+                        />
                     </div>
                 </div>
 

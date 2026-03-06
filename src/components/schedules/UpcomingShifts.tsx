@@ -9,6 +9,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import type { Shift, Doctor } from "@/lib/data-service";
 import { ScheduleModal } from "./ScheduleModal";
 import { DoctorFormModal } from "./DoctorFormModal";
+import { useVirtualizer } from '@tanstack/react-virtual';
+import { useRef } from "react";
 
 // Color hash for doctor initials
 const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
@@ -25,18 +27,26 @@ export function UpcomingShifts() {
     const [searchQuery, setSearchQuery] = useState("");
     const debouncedSearch = useDebounce(searchQuery, 200);
 
+    const parentRef = useRef<HTMLDivElement>(null);
+
     const fetchAll = () => {
         mutate('/api/shifts');
         mutate('/api/doctors');
     };
 
-    // Filter doctors for list
     const filteredDoctors = useMemo(() => {
         return doctors.filter(d =>
             d.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
             d.specialty.toLowerCase().includes(debouncedSearch.toLowerCase())
         );
     }, [doctors, debouncedSearch]);
+
+    const rowVirtualizer = useVirtualizer({
+        count: filteredDoctors.length,
+        getScrollElement: () => parentRef.current,
+        estimateSize: () => 76,
+        overscan: 5,
+    });
 
     const handleDoctorClick = (doc: Doctor) => {
         setSelectedDoctor(doc);
@@ -107,46 +117,69 @@ export function UpcomingShifts() {
                 </div>
 
                 {/* Scrollable List */}
-                <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
-                    {filteredDoctors.map(doc => (
-                        <div
-                            key={doc.id}
-                            onClick={() => handleDoctorClick(doc)}
-                            className="w-full flex items-center gap-4 p-3 rounded-[20px] bg-white/30 hover:bg-white/80 hover:shadow-[0_8px_30px_-10px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 transition-all duration-300 text-left group cursor-pointer relative border border-transparent hover:border-slate-100"
-                        >
-                            <Avatar className="h-12 w-12 border-2 border-white/50 shadow-sm group-hover:scale-105 transition-transform">
-                                {doc.image ? (
-                                    <Image src={doc.image} alt={doc.name} width={48} height={48} className="h-full w-full object-cover" />
-                                ) : (
-                                    <AvatarFallback className="bg-slate-100 text-[12px] font-extrabold text-slate-500 group-hover:text-blue-600 transition-colors">
-                                        {doc.queueCode || getInitials(doc.name)}
-                                    </AvatarFallback>
-                                )}
-                            </Avatar>
-                            <div className="min-w-0 flex-1">
-                                <p className="text-xs font-bold text-slate-800 truncate group-hover:text-blue-600 transition-colors">{doc.name}</p>
-                                <p className="text-[10px] text-slate-400 font-medium truncate mt-0.5">{doc.specialty}</p>
-                            </div>
+                <div ref={parentRef} className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                    <div
+                        style={{
+                            height: `${rowVirtualizer.getTotalSize()}px`,
+                            width: '100%',
+                            position: 'relative',
+                        }}
+                    >
+                        {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                            const doc = filteredDoctors[virtualRow.index];
+                            return (
+                                <div
+                                    key={doc.id}
+                                    style={{
+                                        position: 'absolute',
+                                        top: 0,
+                                        left: 0,
+                                        width: '100%',
+                                        height: `${virtualRow.size}px`,
+                                        transform: `translateY(${virtualRow.start}px)`,
+                                        paddingBottom: '8px'
+                                    }}
+                                >
+                                    <div
+                                        onClick={() => handleDoctorClick(doc)}
+                                        className="w-full h-full flex items-center gap-4 p-3 rounded-[20px] bg-white/30 hover:bg-white/80 hover:shadow-[0_8px_30px_-10px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 transition-all duration-300 text-left group cursor-pointer relative border border-transparent hover:border-slate-100"
+                                    >
+                                        <Avatar className="h-12 w-12 border-2 border-white/50 shadow-sm group-hover:scale-105 transition-transform">
+                                            {doc.image ? (
+                                                <Image src={doc.image} alt={doc.name} width={48} height={48} className="h-full w-full object-cover" />
+                                            ) : (
+                                                <AvatarFallback className="bg-slate-100 text-[12px] font-extrabold text-slate-500 group-hover:text-blue-600 transition-colors">
+                                                    {doc.queueCode || getInitials(doc.name)}
+                                                </AvatarFallback>
+                                            )}
+                                        </Avatar>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="text-xs font-bold text-slate-800 truncate group-hover:text-blue-600 transition-colors">{doc.name}</p>
+                                            <p className="text-[10px] text-slate-400 font-medium truncate mt-0.5">{doc.specialty}</p>
+                                        </div>
 
-                            {/* CRUD Actions (Visible on Hover) */}
-                            <div className="absolute right-3 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 bg-white/90 p-1.5 rounded-xl shadow-sm backdrop-blur-xl border border-slate-100/50">
-                                <button
-                                    onClick={(e) => handleEdit(e, doc)}
-                                    className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                    title="Edit"
-                                >
-                                    <Edit2 size={13} />
-                                </button>
-                                <button
-                                    onClick={(e) => handleDelete(e, doc.id)}
-                                    className="p-1.5 text-slate-400 hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-                                    title="Hapus"
-                                >
-                                    <Trash2 size={12} />
-                                </button>
-                            </div>
-                        </div>
-                    ))}
+                                        {/* CRUD Actions (Visible on Hover) */}
+                                        <div className="absolute right-3 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all transform translate-x-2 group-hover:translate-x-0 bg-white/90 p-1.5 rounded-xl shadow-sm backdrop-blur-xl border border-slate-100/50">
+                                            <button
+                                                onClick={(e) => handleEdit(e, doc)}
+                                                className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                title="Edit"
+                                            >
+                                                <Edit2 size={13} />
+                                            </button>
+                                            <button
+                                                onClick={(e) => handleDelete(e, doc.id)}
+                                                className="p-1.5 text-slate-400 hover:text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                                                title="Hapus"
+                                            >
+                                                <Trash2 size={12} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
                 </div>
             </div>
 

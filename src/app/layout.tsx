@@ -11,6 +11,7 @@ if (typeof window === 'undefined' && !process.env.VERCEL) {
 }
 import "./globals.css";
 import { Sidebar } from "@/components/Sidebar";
+import { OfflineSyncer } from "@/components/OfflineSyncer";
 
 import { SWRProvider } from "@/components/swr-provider";
 import { AutomationRunner } from "@/components/AutomationRunner";
@@ -48,6 +49,7 @@ export default function RootLayout({
         `}} />
       </head>
       <body className={inter.className} suppressHydrationWarning>
+        <OfflineSyncer />
         <SWRProvider>
           <AuthProvider>
           <AutomationRunner />
