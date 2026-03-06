@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "tsx server.ts",
     "build": "next build",
-    "start": "next start",
+    "start": "NODE_ENV=production tsx server.ts",
     "lint": "eslint",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -43,6 +43,8 @@
     "recharts": "^3.7.0",
     "redis": "^4.6.10",
     "serwist": "^9.5.6",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
     "swr": "^2.4.0",
     "tailwind-merge": "^3.4.0",
     "zod": "^4.3.6"
@@ -60,6 +62,7 @@
     "tailwindcss": "^4",
     "ts-jest": "^29",
     "ts-node": "^10",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }

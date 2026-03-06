@@ -10,7 +10,8 @@ import type { Shift, Doctor } from "@/lib/data-service";
 import { ScheduleModal } from "./ScheduleModal";
 import { DoctorFormModal } from "./DoctorFormModal";
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
+import { useSocket } from "@/hooks/use-socket";
 
 // Color hash for doctor initials
 const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
@@ -33,6 +34,20 @@ export function UpcomingShifts() {
         mutate('/api/shifts');
         mutate('/api/doctors');
     };
+
+    // WebSocket Integration
+    const { socket } = useSocket('schedules');
+    useEffect(() => {
+        if (!socket) return;
+        
+        socket.on('schedule_changed', () => {
+            fetchAll(); // Real-time UI refresh for all schedules
+        });
+        
+        return () => {
+            socket.off('schedule_changed');
+        };
+    }, [socket]);
 
     const filteredDoctors = useMemo(() => {
         return doctors.filter(d =>

@@ -60,7 +60,12 @@ const addSoftDelete = (client: PrismaClient) =>
 
 const prismaClientSingleton = () => {
   const connectionString = `${process.env.DATABASE_URL}`;
-  const pool = new Pool({ connectionString });
+  const pool = new Pool({
+    connectionString,
+    max: 20,              // Connection pool size: maximum 20 connections
+    idleTimeoutMillis: 10000, // Close idle connections after 10 seconds to free up DB resources
+    connectionTimeoutMillis: 5000, // Return an error after 5 seconds if connection could not be established
+  });
   const adapter = new PrismaPg(pool);
   const base = new PrismaClient({ adapter });
   return addSoftDelete(base);
