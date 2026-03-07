@@ -100,8 +100,28 @@ export function Sidebar() {
     <>
       <div className="flex-1 overflow-y-auto no-scrollbar">
         <div className="flex items-center gap-3 px-2 mb-8">
-          <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center text-primary-foreground font-bold shadow-lg shadow-primary/20">
-            <Activity size={20} />
+          <div className="h-10 w-10 flex items-center justify-center">
+            <svg width="40" height="40" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-md">
+              <defs>
+                <linearGradient id="sidebar-bg-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#0E4B82" />
+                  <stop offset="100%" stopColor="#082A4D" />
+                </linearGradient>
+                <linearGradient id="sidebar-gold-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#EBC44F" />
+                  <stop offset="100%" stopColor="#B8860B" />
+                </linearGradient>
+              </defs>
+              <rect width="512" height="512" rx="112" fill="url(#sidebar-bg-gradient)" />
+              <circle cx="256" cy="256" r="210" stroke="#1A73E8" strokeWidth={12} opacity={0.4} />
+              <circle cx="256" cy="256" r="160" fill="#0D47A1" fillOpacity={0.2} stroke="#1A73E8" strokeWidth={4} />
+              <path d="M190 220 C180 220, 160 240, 160 300 C160 340, 180 340, 190 340" stroke="url(#sidebar-gold-gradient)" strokeWidth={24} strokeLinecap="round" fill="none" />
+              <path d="M322 220 C332 220, 352 240, 352 300 C352 340, 332 340, 322 340" stroke="url(#sidebar-gold-gradient)" strokeWidth={24} strokeLinecap="round" fill="none" />
+              <path d="M190 220 L215 256" stroke="url(#sidebar-gold-gradient)" strokeWidth={24} strokeLinecap="round" />
+              <path d="M322 220 L297 256" stroke="url(#sidebar-gold-gradient)" strokeWidth={24} strokeLinecap="round" />
+              <rect x="226" y="196" width="60" height="120" rx="8" fill="white" />
+              <rect x="196" y="226" width="120" height="60" rx="8" fill="white" />
+            </svg>
           </div>
           <div>
             <h1 className="text-lg font-bold tracking-tight">MedCore<span className="text-xs align-top text-primary">26</span></h1>
