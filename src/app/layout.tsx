@@ -22,8 +22,16 @@ import { AuthProvider } from "@/lib/auth-context";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "MedCore26 Admin",
-  description: "Advanced Hospital Administration System",
+  title: "MedCore26 Admin | Premium Hospital System",
+  description: "Advanced Hospital Administration System with Real-time Monitoring and Modern UI",
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+  },
 };
 
 export default function RootLayout({

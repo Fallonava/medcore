@@ -1,14 +1,14 @@
 # MedCore Admin — Production Upgrade Report
 
-> **Status:** ✅ Fase 1–5 selesai + SSE upgrade — production-ready
-> **Last updated:** 2026-03-05
+> **Status:** ✅ Fase 1–6 selesai + SWR Hybrid + Bottom Sheet — production-ready
+> **Last updated:** 2026-03-07
 
 ---
 
 ## 🔒 1. Advanced Security
 
 | Item | Status | Detail |
-|---|---|---|
+| --- | --- | --- |
 | JWT Refresh Token (15m + 7d) | ✅ Done | `auth.ts`, `login`, `logout`, `refresh` routes, `middleware`, `auth-context` |
 | Logout from all devices | ✅ Done | `POST /api/auth/logout` body `{ all: true }` |
 | Security Headers (CSP/HSTS) | ✅ Done | `next.config.ts` — 7 header OWASP |
@@ -24,7 +24,7 @@
 ## ⚡ 2. Infrastructure & Reliability
 
 | Item | Status | Detail |
-|---|---|---|
+| --- | --- | --- |
 | Env Validation (Zod) | ✅ Done | `src/lib/env.ts` — crash with clear error if vars missing |
 | `JWT_SECRET` dedicated | ✅ Done | `.env` — terpisah dari `ADMIN_KEY` |
 | Redis RBAC Cache | ✅ Done | `src/lib/rbac-cache.ts` — 5m TTL, graceful no-op jika Redis off |
@@ -47,7 +47,7 @@ NEXT_PUBLIC_APP_URL=      # https://yourdomain.com
 ## 🐘 3. Data Integrity
 
 | Item | Status | Detail |
-|---|---|---|
+| --- | --- | --- |
 | Prisma Soft-Delete Extension | ✅ Done | `src/lib/prisma.ts` — `$extends` for Doctor/Shift/User |
 | DB Index Optimization | ✅ Done | `schema.prisma` — Shift, LeaveRequest, AuditLog, Doctor |
 | Cleanup `data-service.ts` | ✅ Done | Semua `JSONStore` dihapus, hanya types yang tersisa |
@@ -55,7 +55,7 @@ NEXT_PUBLIC_APP_URL=      # https://yourdomain.com
 **Indexes baru di Neon:**
 
 | Model | Index |
-|---|---|
+| --- | --- |
 | `Doctor` | `[deletedAt]` |
 | `Shift` | `[doctorId]`, `[dayIdx, doctorId]` |
 | `LeaveRequest` | `[doctorId]`, `[startDate, endDate]` |
@@ -66,7 +66,7 @@ NEXT_PUBLIC_APP_URL=      # https://yourdomain.com
 ## 🧪 4. Quality & Testing
 
 | Item | Status | Detail |
-|---|---|---|
+| --- | --- | --- |
 | Fix existing Jest tests | ⏳ Pending | `automation.test.ts`, `circuit-breaker.test.ts` |
 | E2E test (Playwright) | ⏳ Optional | Login flow + doctor status change |
 | Health check script | ⏳ Pending | `scripts/health-check.ts` |
@@ -76,7 +76,7 @@ NEXT_PUBLIC_APP_URL=      # https://yourdomain.com
 ## 🚀 5. Deployment & Workflow
 
 | Item | Status | Detail |
-|---|---|---|
+| --- | --- | --- |
 | CI/CD: `prisma migrate deploy` | ✅ Done | `.github/workflows/deploy.yml` |
 | Preview envs (Neon branching) | ✅ Done | `.github/workflows/preview.yml` — branch per PR |
 | PM2 config update | ✅ Done | `ecosystem.config.js` — `NEXT_PUBLIC_APP_URL`, graceful shutdown |
@@ -98,15 +98,16 @@ REDIS_URL
 ## � Ringkasan Pencapaian
 
 | Kategori | Selesai | Total |
-|---|---|---|
+| --- | --- | --- |
 | 🔒 Advanced Security | 6/6 | ✅ |
 | ⚡ Infrastructure | 4/4 | ✅ |
 | 🐘 Data Integrity | 3/3 | ✅ |
 | 🧪 Quality & Testing | 0/3 | ⏳ |
 | 🚀 Deployment | 4/4 | ✅ |
-| 📡 SSE Upgrade | 3/3 | ✅ |
+| 📡 SSE/WebSocket | 4/4 | ✅ |
+| 📱 UI/UX & Optimization | 3/3 | ✅ |
 | 🐛 Bug Fixes | 3/3 | ✅ |
-| **Total** | **23/26** | **88%** |
+| **Total** | **27/30** | **90%** |
 
 ---
 
@@ -154,14 +155,14 @@ Invalidation triggers:
 ## 📡 SSE Upgrade
 
 | Item | Status | Detail |
-|---|---|---|
+| --- | --- | --- |
 | Named events per domain | ✅ Done | `stream/live` kirim `event: doctors/shifts/leaves/settings` terpisah |
 | `useSSE` hook | ✅ Done | `src/hooks/use-sse.ts` — 1 koneksi, handlers map, stable refs |
 | Reconnect feedback UI | ✅ Done | `page.tsx` — pill Live/Reconnecting/Connecting di header |
 
 **SSE Flow (baru):**
 
-```
+```mermaid
 automation doctor update
     │
     ▼
@@ -178,6 +179,46 @@ React re-render — UI update otomatis ♻️
 ```
 
 **Reconnect backoff:** 1s → 2s → 4s → 8s → 16s → 30s (max)
+
+---
+
+## 📱 6. UI/UX & Network Optimization
+
+| Item | Status | Detail |
+|---|---|---|
+| SWR Polling Removal | ✅ Done | `swr-provider.tsx` — `refreshInterval` 5s dihapus |
+| SWR + Socket.io Hybrid | ✅ Done | `swr-provider.tsx` — `mutate` dipicu via `socket.on('event')` |
+| Mobile Bottom Sheet | ✅ Done | `MobileMenu.tsx` — Mengganti Sidebar drawer di mobile |
+| Compact Doctors UI | ✅ Done | `doctors/page.tsx` — Filter & Search lebih ringkas + snap-scroll |
+
+**File yang diubah:**
+`src/components/swr-provider.tsx` · `src/components/MobileMenu.tsx` · `src/app/layout.tsx` · `src/app/doctors/page.tsx`
+
+---
+
+## 📡 SWR + WebSocket Hybrid Flow (baru)
+
+Arsitektur ini menggabungkan kecepatan SWR dengan responsivitas WebSocket untuk efisiensi maksimal:
+
+```
+Server Data Change (e.g., Doctor Edited)
+    │
+    ├─ Server emits Socket.io event: 'doctor_updated'
+    │
+    ▼
+Global SWRProvider (Client)
+    │
+    ├─ Listener: socket.on('doctor_updated', () => mutate('/api/doctors'))
+    │
+    ▼
+SWR Engine
+    │
+    ├─ Invalidate cache for '/api/doctors'
+    ├─ Refetch data in background (1 target GET request)
+    └─ Seamlessly update React Components ♻️
+```
+
+**Hasil**: Log terminal bersih dari polling GET berulang, namun UI tetap update < 100ms saat ada perubahan data nyata.
 
 ---
 
