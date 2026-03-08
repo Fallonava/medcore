@@ -3,6 +3,7 @@ name: Deploy to Production
 on:
   push:
     branches:
+      - experimental
       - main
       - master
 
@@ -12,56 +13,17 @@ concurrency:
 
 jobs:
   deploy:
-    name: Build & Deploy
+    name: Trigger Remote Update
     runs-on: ubuntu-latest
-    environment: production
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: "npm"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Generate Prisma Client
-        run: npx prisma generate
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-
-      # ── Migration: use DIRECT_URL (non-pooled) — pooled connections block migrate ──
-      - name: Run Prisma Migrations
-        run: npx prisma migrate deploy
-        env:
-          DATABASE_URL: ${{ secrets.DIRECT_URL }}
-
-      - name: Build Next.js
-        run: npm run build
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          ADMIN_KEY: ${{ secrets.ADMIN_KEY }}
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
-          REDIS_URL: ${{ secrets.REDIS_URL }}
-          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
-          NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
-          NEXT_PUBLIC_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
-
-      # ── SSH deploy: pull, rebuild on server, reload PM2 ──
       - name: Deploy to server via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USERNAME }}
           key: ${{ secrets.SERVER_SSH_KEY }}
+          passphrase: ${{ secrets.SERVER_PASSPHRASE }}
           script: |
-            cd /home/ubuntu/admin-dashboard
+            cd /home/fallonava/admin-dashboard
             bash scripts/update-server.sh

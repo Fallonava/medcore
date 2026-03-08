@@ -37,7 +37,8 @@ DIRECT_URL="${DIRECT_URL:-$DATABASE_URL}" DATABASE_URL="${DIRECT_URL:-$DATABASE_
 
 # 6. Restart PM2 (Zero-downtime)
 echo "🔄 Merestart aplikasi di PM2..."
-pm2 reload medcore-admin || pm2 start ecosystem.config.js
+# Reload will pick up new build without stopping the process
+pm2 reload ecosystem.config.js --env production || pm2 start ecosystem.config.js --env production
 pm2 save
 
 echo ""
