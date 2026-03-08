@@ -14,7 +14,9 @@ const PUBLIC_PATHS = [
   '/api/auth/create-superadmin',
   '/api/display',         // TV display endpoint (public)
   '/api/stream/live',     // SSE live stream for TV displays
+  '/api/automation',      // Broadcast rules for TV display (GET is public)
   '/api/seed',            // Database seeding
+  '/tv.html',             // Main TV display page
 ];
 
 // Prefixes that are always public (static assets, Next.js internals)
