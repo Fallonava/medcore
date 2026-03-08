@@ -2,8 +2,8 @@ module.exports = {
   apps: [
     {
       name: 'medcore-admin',
-      script: 'node',
-      args: '.next/standalone/server.js',
+      script: 'npm',
+      args: 'start',
       cwd: '/home/fallonava/admin-dashboard',
       instances: 1,
       autorestart: true,
