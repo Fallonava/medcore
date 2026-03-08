@@ -38,7 +38,7 @@ export default function DisplayControl() {
     };
 
     const handleResetStatus = async () => {
-        if (!confirm("Reset status semua dokter menjadi 'TIDAK PRAKTEK'?")) return;
+        if (!confirm("Reset status semua dokter menjadi 'TIDAK_PRAKTEK'?")) return;
         try {
             await fetch('/api/doctors?action=reset', { method: 'POST' });
             alert("Status berhasil di-reset.");
@@ -178,7 +178,7 @@ export default function DisplayControl() {
                             </div>
                             <div>
                                 <div className="text-sm font-bold text-blue-800">Reset Status Dokter</div>
-                                <div className="text-[11px] text-blue-600/70 mt-0.5">Ubah semua status menjadi "TIDAK PRAKTEK"</div>
+                                <div className="text-[11px] text-blue-600/70 mt-0.5">Ubah semua status menjadi "TIDAK_PRAKTEK"</div>
                             </div>
                         </button>
 

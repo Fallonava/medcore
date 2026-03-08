@@ -4,8 +4,27 @@ import { requirePermission } from '@/lib/api-utils';
 import { logAuditAction } from '@/lib/audit';
 import { getSession } from '@/lib/auth';
 import { invalidateRbacCache } from '@/lib/rbac-cache';
+import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
+
+const RolePermissionSchema = z.object({
+  resource: z.string().min(1),
+  action: z.string().min(1),
+});
+
+const RoleCreateSchema = z.object({
+  name: z.string().min(1).max(100),
+  description: z.string().nullable().optional(),
+  permissions: z.array(RolePermissionSchema).optional().default([]),
+});
+
+const RoleUpdateSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1).max(100).optional(),
+  description: z.string().nullable().optional(),
+  permissions: z.array(RolePermissionSchema).optional().default([]),
+});
 
 // GET /api/roles — List all roles with permissions
 export async function GET(req: Request) {
@@ -30,12 +49,8 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { name, description, permissions } = body;
-    // permissions: [{ resource: string, action: string }]
-
-    if (!name) {
-      return NextResponse.json({ error: 'Nama role wajib diisi' }, { status: 400 });
-    }
+    const validated = RoleCreateSchema.parse(body);
+    const { name, description, permissions } = validated;
 
     const existing = await prisma.role.findUnique({ where: { name } });
     if (existing) {
@@ -67,6 +82,9 @@ export async function POST(req: Request) {
 
     return NextResponse.json(newRole, { status: 201 });
   } catch (err) {
+    if (err instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Validation failed', details: err.flatten() }, { status: 400 });
+    }
     console.error('[Roles POST]', err);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
@@ -79,11 +97,8 @@ export async function PUT(req: Request) {
 
   try {
     const body = await req.json();
-    const { id, name, description, permissions } = body;
-
-    if (!id) {
-      return NextResponse.json({ error: 'Role ID wajib diisi' }, { status: 400 });
-    }
+    const validated = RoleUpdateSchema.parse(body);
+    const { id, name, description, permissions } = validated;
 
     // Check system role protection
     const existing = await prisma.role.findUnique({ where: { id } });
@@ -124,6 +139,9 @@ export async function PUT(req: Request) {
 
     return NextResponse.json(updated);
   } catch (err) {
+    if (err instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Validation failed', details: err.flatten() }, { status: 400 });
+    }
     console.error('[Roles PUT]', err);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }

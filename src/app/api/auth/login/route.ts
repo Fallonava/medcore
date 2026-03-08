@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     // ── Rate Limiting ──
     const forwarded = req.headers.get('x-forwarded-for');
     const ip = forwarded ? forwarded.split(',')[0].trim() : 'unknown';
-    if (!checkRateLimit(`login_${ip}`, LOGIN_LIMIT, LOGIN_WINDOW)) {
+    if (!await checkRateLimit(`login_${ip}`, LOGIN_LIMIT, LOGIN_WINDOW)) {
       await logAuditAction({
         action: 'LOGIN_BLOCKED_RATE_LIMIT',
         details: { username, ip },

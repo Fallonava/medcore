@@ -12,6 +12,14 @@ const customJestConfig = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
+  // Transform ESM-only packages (jose ships as ESM)
+  // Use [/\\\\] to match both Unix / and Windows \ path separators
+  transformIgnorePatterns: [
+    'node_modules[/\\\\](?!(jose|@panva)[/\\\\])',
+  ],
+  // Ignore .next build cache to avoid haste module naming collision
+  testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
+  modulePathIgnorePatterns: ['<rootDir>/.next/'],
   testMatch: ['**/__tests__/**/*.test.ts', '**/__tests__/**/*.test.tsx'],
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',

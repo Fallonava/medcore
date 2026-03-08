@@ -11,24 +11,22 @@ module.exports = {
       max_memory_restart: '400M',
 
       // ── Environment Variables ──────────────────────────────────────────────
-      // These are merged with any vars already set in the system environment.
-      // Secrets (DATABASE_URL, JWT_SECRET, etc.) should be set via
-      // /etc/environment or a .env.production.local file on the server —
-      // NOT hardcoded here.
+      // These vars are MERGED with vars already loaded from the .env file.
+      // Secrets (DATABASE_URL, JWT_SECRET, etc.) are written to
+      // /home/fallonava/admin-dashboard/.env by the deploy script — NOT here.
+      //
+      // Only put non-secret, deployment-level vars here.
       env: {
         NODE_ENV: 'production',
         PORT: 3000,
+        // HOSTNAME must be 0.0.0.0 so the process listens on all interfaces.
+        // The redirect fix (using host header) means 0.0.0.0 no longer
+        // leaks into browser-visible URLs.
         HOSTNAME: '0.0.0.0',
 
-        // App URL — required for internal API calls (automation fallback, etc.)
-        // Set this to your actual production domain:
-        NEXT_PUBLIC_APP_URL: 'https://your-domain.com',
-
-        // Sentry release tracking (auto-set from git during deploy)
-        // SENTRY_RELEASE is typically set by the CI pipeline via:
-        //   pm2 reload ecosystem.config.js --update-env
-        // Override here only if not using CI:
-        // SENTRY_RELEASE: 'manual-version',
+        // Explicitly set the public URL so internal automation fallback
+        // can make API calls to itself. Keep this in sync with your domain.
+        NEXT_PUBLIC_APP_URL: 'https://medcore.fallonava.my.id',
       },
 
       // ── Production log config ──────────────────────────────────────────────
@@ -40,7 +38,11 @@ module.exports = {
       // ── Graceful shutdown ──────────────────────────────────────────────────
       kill_timeout: 5000,
       wait_ready: true,
-      listen_timeout: 10000,
+      listen_timeout: 15000,
+
+      // ── Restart policy ────────────────────────────────────────────────────
+      // Exponential backoff: don't hammer the process if it's crash-looping
+      exp_backoff_restart_delay: 100,
     },
   ],
 };

@@ -16,10 +16,15 @@ app.prepare().then(() => {
     handle(req, res, parsedUrl);
   });
 
+  const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim())
+    : dev ? ['http://localhost:3000'] : [];
+
   const io = new Server(httpServer, {
     cors: {
-      origin: "*",
-      methods: ["GET", "POST"]
+      origin: allowedOrigins.length > 0 ? allowedOrigins : false,
+      methods: ["GET", "POST"],
+      credentials: true,
     }
   });
 

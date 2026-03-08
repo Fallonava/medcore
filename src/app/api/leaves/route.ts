@@ -1,8 +1,34 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requirePermission } from '@/lib/api-utils';
+import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
+
+const LeaveCreateSchema = z.object({
+    doctor: z.string().min(1),
+    dates: z.any().optional(),
+    specialty: z.string().optional().nullable(),
+    type: z.string().min(1),
+    startDate: z.union([z.string(), z.date()]),
+    endDate: z.union([z.string(), z.date()]),
+    reason: z.string().optional().nullable(),
+    status: z.string().optional().nullable(),
+    avatar: z.string().optional().nullable(),
+});
+
+const LeaveCreateBulkSchema = z.union([LeaveCreateSchema, z.array(LeaveCreateSchema)]);
+
+const LeaveUpdateSchema = z.object({
+    id: z.string().min(1),
+    specialty: z.string().optional().nullable(),
+    type: z.string().optional(),
+    startDate: z.union([z.string(), z.date()]).optional(),
+    endDate: z.union([z.string(), z.date()]).optional(),
+    reason: z.string().optional().nullable(),
+    status: z.string().optional().nullable(),
+    avatar: z.string().optional().nullable(),
+});
 
 export async function GET() {
     const leaves = await (prisma.leaveRequest as any).findMany({
@@ -21,9 +47,11 @@ export async function POST(req: Request) {
     const authErr = await requirePermission(req, 'leaves', 'write');
     if (authErr) return authErr;
 
-    const data = await req.json();
+    try {
+        const body = await req.json();
+        const data = LeaveCreateBulkSchema.parse(body);
 
-    if (Array.isArray(data)) {
+        if (Array.isArray(data)) {
         const newLeaves = await Promise.all(
             data.map(async (item) => {
                 const { dates, doctor, ...rest } = item;
@@ -32,6 +60,7 @@ export async function POST(req: Request) {
                 return prisma.leaveRequest.create({
                     data: {
                         ...rest,
+                        type: item.type as any,
                         doctorId: doc.id,
                         status: 'Approved',
                         startDate: new Date(item.startDate),
@@ -49,6 +78,7 @@ export async function POST(req: Request) {
         const newLeave = await prisma.leaveRequest.create({
             data: {
                 ...rest,
+                type: data.type as any,
                 doctorId: doc.id,
                 status: 'Approved',
                 startDate: new Date(data.startDate),
@@ -57,20 +87,22 @@ export async function POST(req: Request) {
         });
         return NextResponse.json(newLeave);
     }
+    } catch (error) {
+        if (error instanceof z.ZodError) {
+            return NextResponse.json({ error: 'Validation failed', details: error.flatten() }, { status: 400 });
+        }
+        return NextResponse.json({ error: String(error) }, { status: 500 });
+    }
 }
 
 export async function PUT(req: Request) {
     const authErr = await requirePermission(req, 'leaves', 'write');
     if (authErr) return authErr;
 
-    const data = await req.json();
-    const { id, ...updates } = data;
-
-    if (!id) {
-        return NextResponse.json({ error: 'ID required' }, { status: 400 });
-    }
-
     try {
+        const body = await req.json();
+        const validated = LeaveUpdateSchema.parse(body);
+        const { id, ...updates } = validated;
         if (updates.startDate) updates.startDate = new Date(updates.startDate);
         if (updates.endDate) updates.endDate = new Date(updates.endDate);
 
@@ -80,7 +112,10 @@ export async function PUT(req: Request) {
         });
         return NextResponse.json(updatedLeave);
     } catch (error) {
-        return NextResponse.json({ error: 'Leave request not found' }, { status: 404 });
+        if (error instanceof z.ZodError) {
+            return NextResponse.json({ error: 'Validation failed', details: error.flatten() }, { status: 400 });
+        }
+        return NextResponse.json({ error: 'Leave request not found or update failed' }, { status: 404 });
     }
 }
 

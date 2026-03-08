@@ -55,7 +55,7 @@ export default function SimulatorPage() {
       <textarea
         value={jsonText}
         onChange={(e) => setJsonText(e.target.value)}
-        placeholder='[ { "id": 1, "name": "Sample", "condition": {"status":"TIDAK PRAKTEK"}, "action": {"status":"CUTI"} } ]'
+        placeholder='[ { "id": 1, "name": "Sample", "condition": {"status":"TIDAK_PRAKTEK"}, "action": {"status":"CUTI"} } ]'
         className="w-full h-48 bg-slate-900 border border-slate-700 rounded p-3 mb-4 text-sm"
       />
 

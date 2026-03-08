@@ -66,10 +66,13 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET() {
-  const response = NextResponse.redirect(
-    new URL('/login', process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000')
-  );
+export async function GET(req: Request) {
+  // Use the host header and forward protocol to construct a reliable redirect URL
+  // This avoids the '0.0.0.0' issue common in some server environments
+  const host = req.headers.get('host') || 'localhost:3000';
+  const protocol = req.headers.get('x-forwarded-proto') || 'http';
+  
+  const response = NextResponse.redirect(new URL('/login', `${protocol}://${host}`));
   clearAuthCookies(response);
   return response;
 }

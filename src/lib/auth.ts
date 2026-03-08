@@ -8,13 +8,16 @@ import { getCachedPermissions, setCachedPermissions, invalidateRbacCache } from 
 import { cookies } from 'next/headers';
 
 // ─── Constants ───
-const ACCESS_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || process.env.ADMIN_KEY || 'fallback-secret-key'
-);
-// Refresh tokens use a separate secret for extra security
-const REFRESH_SECRET = new TextEncoder().encode(
-  (process.env.JWT_SECRET || process.env.ADMIN_KEY || 'fallback-secret-key') + '_refresh'
-);
+// JWT_SECRET is validated as required (≥32 chars) by env.ts (Zod) on startup.
+// ADMIN_KEY is intentionally NOT used here — it serves a different purpose
+// (server-to-server API bypass) and mixing them would be a security risk.
+if (!process.env.JWT_SECRET) {
+  throw new Error('CRITICAL: JWT_SECRET environment variable is missing. Check your .env file.');
+}
+
+const ACCESS_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
+// Refresh tokens use a separate derived secret for extra security
+const REFRESH_SECRET = new TextEncoder().encode(process.env.JWT_SECRET + '_refresh');
 
 const ACCESS_COOKIE  = 'medcore_session';
 const REFRESH_COOKIE = 'medcore_refresh';

@@ -44,7 +44,7 @@ export interface Doctor {
     id: string;
     name: string;
     specialty: string;
-    status: 'BUKA' | 'PENUH' | 'OPERASI' | 'CUTI' | 'SELESAI' | 'AKAN_BUKA' | 'TIDAK PRAKTEK' | 'TIDAK_PRAKTEK';
+    status: 'BUKA' | 'PENUH' | 'OPERASI' | 'CUTI' | 'SELESAI' | 'AKAN_BUKA' | 'TIDAK_PRAKTEK';
     image?: string;
     category: 'Bedah' | 'NonBedah';
     startTime: string;   // e.g., "08:00"

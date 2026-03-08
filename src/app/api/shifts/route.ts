@@ -1,8 +1,24 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requirePermission } from '@/lib/api-utils';
+import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
+
+const ShiftCreateSchema = z.object({
+    doctorId: z.string().min(1),
+    dayIdx: z.number().int().min(0).max(6),
+    timeIdx: z.number().int().min(0).optional().default(0),
+    title: z.string().min(1),
+    color: z.string().min(1),
+    formattedTime: z.string().min(1),
+    registrationTime: z.string().nullable().optional(),
+    disabledDates: z.array(z.string()).optional(),
+});
+
+const ShiftUpdateSchema = ShiftCreateSchema.partial().extend({
+    id: z.string().min(1),
+});
 
 export async function GET() {
     const shifts = await (prisma.shift as any).findMany({
@@ -23,19 +39,18 @@ export async function POST(req: Request) {
 
     try {
         const body = await req.json();
-        const { doctor, ...data } = body;
+        
+        // Ensure id is not passed as null to create (handle incoming data before validation if needed)
+        if (body.id === null) delete body.id;
 
-        // Ensure id is not passed as null to create
-        if (data.id === null) delete data.id;
+        const validated = ShiftCreateSchema.parse(body);
 
-        // Ensure timeIdx is set (required in schema)
-        if (data.timeIdx === undefined || data.timeIdx === null) {
-            data.timeIdx = 0;
-        }
-
-        const newShift = await prisma.shift.create({ data });
+        const newShift = await prisma.shift.create({ data: validated });
         return NextResponse.json(newShift);
     } catch (e) {
+        if (e instanceof z.ZodError) {
+            return NextResponse.json({ error: 'Validation failed', details: e.flatten() }, { status: 400 });
+        }
         console.error("Shift POST Error:", e);
         return NextResponse.json({ error: String(e) }, { status: 500 });
     }
@@ -47,14 +62,18 @@ export async function PUT(req: Request) {
 
     try {
         const body = await req.json();
-        const { id, doctor, ...updates } = body;
+        const validated = ShiftUpdateSchema.parse(body);
+        const { id, ...updates } = validated;
 
         const updated = await (prisma.shift as any).update({
-            where: { id: String(id) },
+            where: { id },
             data: updates
         });
         return NextResponse.json(updated);
     } catch (e) {
+        if (e instanceof z.ZodError) {
+            return NextResponse.json({ error: 'Validation failed', details: e.flatten() }, { status: 400 });
+        }
         console.error("Shift PUT Error:", e);
         return NextResponse.json({ error: String(e) }, { status: 500 });
     }

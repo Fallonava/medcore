@@ -319,7 +319,7 @@ export default function DoctorsPage() {
                                 { value: "Aktif", label: "Aktif (Tayang)" },
                                 { value: "Cuti", label: "Cuti" },
                                 { value: "Selesai", label: "Selesai" },
-                                { value: "TIDAK PRAKTEK", label: "Tidak Praktek" },
+                                { value: "TIDAK_PRAKTEK", label: "Tidak Praktek" },
                             ]}
                         />
                     </div>
@@ -430,7 +430,7 @@ export default function DoctorsPage() {
                 <div className="flex items-center gap-2">
                     <span className="text-xs font-semibold text-slate-400 ml-2">Ubah Status:</span>
                     <button onClick={() => handleBulkStatusChange('CUTI')} className="px-3 py-2 rounded-xl text-xs font-bold hover:bg-purple-500/20 text-purple-300 transition-colors">Cuti</button>
-                    <button onClick={() => handleBulkStatusChange('TIDAK PRAKTEK')} className="px-3 py-2 rounded-xl text-xs font-bold hover:bg-slate-500/20 text-slate-300 transition-colors">Nonaktif</button>
+                    <button onClick={() => handleBulkStatusChange('TIDAK_PRAKTEK')} className="px-3 py-2 rounded-xl text-xs font-bold hover:bg-slate-500/20 text-slate-300 transition-colors">Nonaktif</button>
                     <button onClick={() => handleBulkStatusChange('BUKA')} className="px-3 py-2 rounded-xl text-xs font-bold hover:bg-blue-500/20 text-blue-300 transition-colors">Buka</button>
                 </div>
 

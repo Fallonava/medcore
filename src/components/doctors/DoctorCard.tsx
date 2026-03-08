@@ -26,8 +26,8 @@ const statusConfig: Record<string, { label: string; color: string; bg: string; d
     'PENUH': { label: 'Penuh', color: 'text-amber-600', bg: 'bg-amber-50' },
     'CUTI': { label: 'Cuti', color: 'text-purple-600', bg: 'bg-purple-50' },
     'SELESAI': { label: 'Selesai', color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    'TIDAK PRAKTEK': { label: 'Tidak Aktif', color: 'text-slate-400', bg: 'bg-slate-50' },
     'TIDAK_PRAKTEK': { label: 'Tidak Aktif', color: 'text-slate-400', bg: 'bg-slate-50' },
+    'AKAN_BUKA': { label: 'Akan Buka', color: 'text-sky-600', bg: 'bg-sky-50' },
 };
 
 export function getStatusConfig(status?: string | null) {
@@ -62,7 +62,7 @@ export function DoctorCard({ doctor, index, isSelected, onToggleSelect, onEdit, 
     const [timeRemaining, setTimeRemaining] = useState<string>("Buka");
 
     useEffect(() => {
-        if (doctor.status === "TIDAK_PRAKTEK" || doctor.status === "TIDAK PRAKTEK" || doctor.status === "SELESAI" || doctor.status === "CUTI") {
+        if (doctor.status === "TIDAK_PRAKTEK" || doctor.status === "SELESAI" || doctor.status === "CUTI") {
             setTimeRemaining("");
             return;
         }

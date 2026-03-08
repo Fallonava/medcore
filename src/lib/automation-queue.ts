@@ -58,9 +58,14 @@ class AutomationQueueManager {
                 url: redisUrl
             });
 
-            // Prevent unhandled node errors if Redis disconnects or fails
+            // Log a one-time warning so operators can diagnose Redis issues
+            // without flooding logs on every reconnect attempt
+            let errorLogged = false;
             this.redis.on('error', (err) => {
-                // Suppress background connection error logs
+                if (!this.isInitialized && !errorLogged) {
+                    console.warn('[AutomationQueue] Redis connection error:', err.message);
+                    errorLogged = true;
+                }
             });
 
             await this.redis.connect();

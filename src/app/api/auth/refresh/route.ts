@@ -24,21 +24,27 @@ export async function GET(req: Request) {
   const cookieStore = await cookies();
   const rawRefreshToken = cookieStore.get('medcore_refresh')?.value;
 
+  // Use the host header and forward protocol to construct a reliable redirect URL
+  // This avoids the '0.0.0.0' issue common in some server environments
+  const host = req.headers.get('host') || 'localhost:3000';
+  const protocol = req.headers.get('x-forwarded-proto') || 'http';
+  const baseUrl = `${protocol}://${host}`;
+
   // No refresh token → send to login
   if (!rawRefreshToken) {
-    return NextResponse.redirect(new URL('/login', req.url));
+    return NextResponse.redirect(new URL('/login', baseUrl));
   }
 
   const userId = await verifyRefreshToken(rawRefreshToken);
   if (!userId) {
-    const res = NextResponse.redirect(new URL('/login', req.url));
+    const res = NextResponse.redirect(new URL('/login', baseUrl));
     clearAuthCookies(res);
     return res;
   }
 
   const session = await buildSessionPayload(userId);
   if (!session) {
-    const res = NextResponse.redirect(new URL('/login', req.url));
+    const res = NextResponse.redirect(new URL('/login', baseUrl));
     clearAuthCookies(res);
     return res;
   }
@@ -57,7 +63,7 @@ export async function GET(req: Request) {
   await revokeRefreshToken(rawRefreshToken);
 
   // Redirect back to the original page with fresh cookies set
-  const response = NextResponse.redirect(new URL(redirectTo, req.url));
+  const response = NextResponse.redirect(new URL(redirectTo, baseUrl));
   setAuthCookies(response, newAccessToken, newRefreshToken);
   return response;
 }

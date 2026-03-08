@@ -3,8 +3,24 @@ import { prisma } from '@/lib/prisma';
 import { hashPassword, getSession } from '@/lib/auth';
 import { requirePermission } from '@/lib/api-utils';
 import { logAuditAction } from '@/lib/audit';
+import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
+
+const UserCreateSchema = z.object({
+  username: z.string().min(3).max(50),
+  password: z.string().min(6),
+  name: z.string().min(1).max(100),
+  roleId: z.string().nullable().optional(),
+});
+
+const UserUpdateSchema = z.object({
+  id: z.string().min(1),
+  username: z.string().min(3).max(50).optional(),
+  password: z.string().min(6).optional(),
+  name: z.string().min(1).max(100).optional(),
+  roleId: z.string().nullable().optional(),
+});
 
 // GET /api/users — List all users
 export async function GET(req: Request) {
@@ -28,11 +44,8 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { username, password, name, roleId } = body;
-
-    if (!username || !password || !name) {
-      return NextResponse.json({ error: 'Username, password, dan nama wajib diisi' }, { status: 400 });
-    }
+    const validated = UserCreateSchema.parse(body);
+    const { username, password, name, roleId } = validated;
 
     const existing = await prisma.user.findUnique({ where: { username } });
     if (existing) {
@@ -57,6 +70,9 @@ export async function POST(req: Request) {
     const { password: _, ...safeUser } = user;
     return NextResponse.json(safeUser, { status: 201 });
   } catch (err) {
+    if (err instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Validation failed', details: err.flatten() }, { status: 400 });
+    }
     console.error('[Users POST]', err);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
@@ -69,11 +85,8 @@ export async function PUT(req: Request) {
 
   try {
     const body = await req.json();
-    const { id, password, ...rest } = body;
-
-    if (!id) {
-      return NextResponse.json({ error: 'User ID wajib diisi' }, { status: 400 });
-    }
+    const validated = UserUpdateSchema.parse(body);
+    const { id, password, ...rest } = validated;
 
     const data: Record<string, unknown> = { ...rest };
     if (password) {
@@ -98,6 +111,9 @@ export async function PUT(req: Request) {
     const { password: _, ...safeUser } = user;
     return NextResponse.json(safeUser);
   } catch (err) {
+    if (err instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Validation failed', details: err.flatten() }, { status: 400 });
+    }
     console.error('[Users PUT]', err);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }

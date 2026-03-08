@@ -7,8 +7,7 @@ import { notifyDoctorUpdates } from '@/lib/automation-broadcaster';
 export const dynamic = 'force-dynamic';
 
 // Validation schemas
-const DoctorStatusEnum = z.enum(['BUKA', 'PENUH', 'OPERASI', 'AKAN_BUKA', 'CUTI', 'SELESAI', 'TIDAK_PRAKTEK', 'TIDAK PRAKTEK'])
-    .transform(val => (val === 'TIDAK PRAKTEK' || val === 'TIDAK_PRAKTEK') ? 'TIDAK_PRAKTEK' : val as any);
+const DoctorStatusEnum = z.enum(['BUKA', 'PENUH', 'OPERASI', 'AKAN_BUKA', 'CUTI', 'SELESAI', 'TIDAK_PRAKTEK']);
 
 const BulkUpdateSchema = z.array(
     z.object({
@@ -111,17 +110,22 @@ export async function POST(req: Request) {
 
     if (action === 'reorder') {
         try {
-            const body = await req.json(); // Array of { id, order }
+            const body = await req.json();
+            const validated = z.array(z.object({ id: z.union([z.string(), z.number()]).transform(String), order: z.number() })).parse(body);
+
             await prisma.$transaction(
-                body.map((item: { id: string, order: number }) => 
+                validated.map((item) => 
                     prisma.doctor.update({
-                        where: { id: String(item.id) },
-                        data: { order: Number(item.order) }
+                        where: { id: item.id },
+                        data: { order: item.order }
                     })
                 )
             );
             return NextResponse.json({ success: true });
         } catch (err) {
+            if (err instanceof z.ZodError) {
+                return NextResponse.json({ error: 'Validation failed', details: err.flatten() }, { status: 400 });
+            }
             return NextResponse.json({ error: String(err) }, { status: 500 });
         }
     }
