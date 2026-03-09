@@ -1,0 +1,17 @@
+name: Deploy to Home Server
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    name: Sync Home Server
+    runs-on: self-hosted
+
+    steps:
+      - name: Run Sync Script
+        run: |
+          cd /home/fallonava/admin-dashboard
+          bash scripts/sync-home.sh
