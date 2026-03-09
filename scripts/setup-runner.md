@@ -40,9 +40,16 @@ sudo ./svc.sh start
 
 ---
 
-## 4. Verify
+## 5. 🛡️ Security Hardening (Sangat Penting!)
 
-1. Go back to **Settings -> Actions -> Runners**.
-2. You should see your runner with status **Idle** (Green).
-3. Push a change to the `master` branch.
-4. Go to **Actions** tab and see **Deploy to Home Server** running automatically!
+Karena repository Anda bersifat **publik**, ada risiko keamanan jika orang lain membuat *Pull Request* (PR) yang berisi kode berbahaya.
+
+**Wajib dilakukan di GitHub Settings:**
+1. Masuk ke **Settings -> Actions -> General**.
+2. Cari bagian **Workflow permissions**.
+3. Cari **Fork pull request workflows from outside collaborators**.
+4. Pilih **Require approval for all outside collaborators** (agar runner tidak langsung jalan sebelum Anda setujui).
+
+**Rekomendasi Tambahan:**
+- Gunakan runner hanya untuk branch spesifik (misal: `master`).
+- Jangan simpan *secrets* yang sangat sensitif kecuali benar-benar diperlukan oleh runner.
