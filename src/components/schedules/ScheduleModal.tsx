@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { X, Clock, Plus, Trash2, Save, Copy, Power, CalendarOff, Edit3, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -58,6 +58,8 @@ export function ScheduleModal({ doctor, shifts, isOpen, onClose, onUpdate }: Sch
     const [adding, setAdding] = useState(false);
     const [expandId, setExpandId] = useState<string | null>(null);
     const [form, setForm] = useState<Partial<Shift>>(INIT);
+    const [isToggling, setIsToggling] = useState(false);
+    const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
     // Helpers for Time Conversion
     const getTimes = (formatted: string) => {
@@ -72,23 +74,47 @@ export function ScheduleModal({ doctor, shifts, isOpen, onClose, onUpdate }: Sch
     // Helper Custom Dropdown
     const CustomDropdown = ({ value, options, onChange, label, placeholder, className }: any) => {
         const [open, setOpen] = useState(false);
+        const dropdownRef = useRef<HTMLDivElement>(null);
         const selectedLabel = options.find((o: any) => o.value === value)?.label || placeholder || "Select";
 
+        useEffect(() => {
+            const handleClickOutside = (event: MouseEvent) => {
+                if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                    setOpen(false);
+                }
+            };
+            const handleEscape = (event: KeyboardEvent) => {
+                if (event.key === 'Escape') setOpen(false);
+            };
+
+            if (open) {
+                document.addEventListener('mousedown', handleClickOutside);
+                document.addEventListener('keydown', handleEscape);
+            }
+            return () => {
+                document.removeEventListener('mousedown', handleClickOutside);
+                document.removeEventListener('keydown', handleEscape);
+            };
+        }, [open]);
+
         return (
-            <div className={cn("relative z-30 flex-1", className)} onMouseLeave={() => setOpen(false)}>
+            <div className={cn("relative flex-1", className)} ref={dropdownRef}>
                 {label && <label className="text-[11px] text-muted-foreground font-bold uppercase tracking-wider block mb-1.5">{label}</label>}
                 <button 
                     type="button"
                     onClick={() => setOpen(!open)}
-                    className="flex justify-between items-center w-full bg-white rounded-2xl p-3 text-sm text-slate-700 focus:ring-2 focus:ring-blue-500/30 outline-none transition-all border border-slate-100 min-h-[46px]"
+                    className={cn(
+                        "flex justify-between items-center w-full bg-white rounded-2xl p-3 text-sm text-slate-700 outline-none transition-all border min-h-[46px] group",
+                        open ? "border-blue-400 ring-4 ring-blue-500/10 shadow-sm" : "border-slate-100 hover:border-slate-200 shadow-sm hover:shadow-md"
+                    )}
                 >
-                    <span className="truncate pr-2 font-medium">{selectedLabel}</span>
-                    <ChevronDown size={14} className={cn("text-slate-400 transition-transform flex-shrink-0", open && "rotate-180")} />
+                    <span className="truncate pr-2 font-semibold text-slate-600 group-hover:text-blue-600 transition-colors">{selectedLabel}</span>
+                    <ChevronDown size={14} className={cn("text-slate-400 transition-transform duration-300 flex-shrink-0", open && "rotate-180 text-blue-500")} />
                 </button>
                 
                 <div className={cn(
-                    "absolute top-[calc(100%+8px)] left-0 w-full bg-white/95 backdrop-blur-2xl rounded-2xl shadow-[0_16px_40px_-12px_rgba(0,0,0,0.15)] border border-white p-1.5 transition-all duration-300 origin-top z-50 max-h-[200px] overflow-y-auto custom-scrollbar",
-                    open ? "opacity-100 scale-y-100 translate-y-0" : "opacity-0 scale-y-95 -translate-y-2 pointer-events-none"
+                    "absolute top-[calc(100%+8px)] left-0 w-full bg-white/95 backdrop-blur-xl rounded-2xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.2)] border border-white/50 p-2 transition-all duration-300 origin-top z-[100] max-h-[240px] overflow-y-auto custom-scrollbar",
+                    open ? "opacity-100 scale-100 translate-y-0" : "opacity-0 scale-95 -translate-y-2 pointer-events-none"
                 )}>
                     {options.map((opt: any) => (
                         <button
@@ -96,13 +122,16 @@ export function ScheduleModal({ doctor, shifts, isOpen, onClose, onUpdate }: Sch
                             key={opt.value}
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); onChange(opt.value); setOpen(false); }}
                             className={cn(
-                                "w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold transition-all mb-1 last:mb-0 truncate",
+                                "w-full text-left px-3 py-2.5 rounded-xl text-sm font-semibold transition-all mb-1 last:mb-0 truncate flex items-center justify-between group/item",
                                 value === opt.value 
-                                    ? "bg-blue-50/80 text-blue-600" 
+                                    ? "bg-blue-600 text-white shadow-md shadow-blue-200" 
                                     : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
                             )}
                         >
-                            {opt.label}
+                            <span>{opt.label}</span>
+                            {value === opt.value && (
+                                <div className="w-1.5 h-1.5 rounded-full bg-white/80 animate-pulse" />
+                            )}
                         </button>
                     ))}
                 </div>
@@ -213,16 +242,25 @@ export function ScheduleModal({ doctor, shifts, isOpen, onClose, onUpdate }: Sch
     };
 
     const toggle = async (s: Shift) => {
+        setIsToggling(true);
         const off = s.disabledDates || [];
         const isOff = off.includes(today);
         const newVal = isOff ? off.filter(d => d !== today) : [...off, today];
-        await fetch('/api/shifts', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: s.id, disabledDates: newVal })
-        });
-        socket.socket?.emit('schedule_updated', { action: 'toggle_shift' });
-        onUpdate?.();
+        try {
+            await fetch('/api/shifts', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: s.id, disabledDates: newVal })
+            });
+            socket.socket?.emit('schedule_updated', { action: 'toggle_shift' });
+            onUpdate?.();
+            setSuccessMsg(isOff ? "Shift diaktifkan kembali" : "Shift dinonaktifkan untuk hari ini");
+            setTimeout(() => setSuccessMsg(null), 3000);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setIsToggling(false);
+        }
     };
 
     const addDis = async (s: Shift, d: string) => {
@@ -381,16 +419,46 @@ export function ScheduleModal({ doctor, shifts, isOpen, onClose, onUpdate }: Sch
                         {editId && (
                            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 space-y-4 mb-4">
                                 <div className="flex items-center justify-between">
-                                    <p className="text-xs font-black text-blue-600 uppercase tracking-widest">Edit Shift</p>
-                                    <div className="flex gap-2">
-                                        <button onClick={() => {
-                                            const s = shifts.find(x=>x.id===editId);
-                                            if(s) toggle(s);
-                                        }} className="p-1 hover:bg-white rounded" title="Toggle hari ini" type="button">
-                                            <Power size={14} className="text-emerald-500"/>
+                                    <div className="flex flex-col">
+                                        <p className="text-xs font-black text-blue-600 uppercase tracking-widest">Edit Shift</p>
+                                        {successMsg && (
+                                            <p className="text-[10px] text-emerald-600 font-bold animate-pulse mt-1">✓ {successMsg}</p>
+                                        )}
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        {/* Professional Toggle Status */}
+                                        <button 
+                                            onClick={() => {
+                                                const s = shifts.find(x => x.id === editId);
+                                                if (s) toggle(s);
+                                            }} 
+                                            disabled={isToggling}
+                                            className={cn(
+                                                "group flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all active:scale-95 disabled:opacity-50",
+                                                (shifts.find(x => x.id === editId)?.disabledDates || []).includes(today)
+                                                    ? "bg-red-50 border-red-200 text-red-600 hover:bg-red-100"
+                                                    : "bg-emerald-50 border-emerald-200 text-emerald-600 hover:bg-emerald-100"
+                                            )}
+                                            title="Klik untuk mengubah status hari ini"
+                                            type="button"
+                                        >
+                                            <div className={cn(
+                                                "w-2 h-2 rounded-full animate-pulse",
+                                                (shifts.find(x => x.id === editId)?.disabledDates || []).includes(today) ? "bg-red-500" : "bg-emerald-500"
+                                            )} />
+                                            <span className="text-[11px] font-bold uppercase tracking-tight">
+                                                {(shifts.find(x => x.id === editId)?.disabledDates || []).includes(today) ? "Nonaktif" : "Aktif Hari Ini"}
+                                            </span>
+                                            <Power size={12} className={cn("transition-transform group-hover:rotate-12", isToggling && "animate-spin")} />
                                         </button>
-                                        <button onClick={() => del(editId)} className="p-1 hover:bg-white rounded" title="Hapus" type="button">
-                                            <Trash2 size={14} className="text-red-500" />
+
+                                        <button 
+                                            onClick={() => del(editId)} 
+                                            className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-xl transition-colors border border-transparent hover:border-red-100" 
+                                            title="Hapus Shift Permanen" 
+                                            type="button"
+                                        >
+                                            <Trash2 size={16} />
                                         </button>
                                     </div>
                                 </div>
