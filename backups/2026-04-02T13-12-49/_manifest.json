@@ -1,0 +1,15 @@
+{
+  "backupDate": "2026-04-02T13:12:51.662Z",
+  "backupDir": "F:\\Next\\admin-dashboard\\backups\\2026-04-02T13-12-49",
+  "database": "medcoredb @ 192.168.1.12:5433",
+  "tables": {
+    "doctors": "NOT_FOUND",
+    "shifts": "NOT_FOUND",
+    "leave_requests": "NOT_FOUND",
+    "users": "NOT_FOUND",
+    "settings": "NOT_FOUND",
+    "automation_logs": "NOT_FOUND",
+    "automation_rules": "NOT_FOUND"
+  },
+  "totalRows": 0
+}

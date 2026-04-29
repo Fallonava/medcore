@@ -1,0 +1,14 @@
+[
+  {
+    "id": "1",
+    "automationEnabled": true,
+    "runTextMessage": "Selamat Datang di RSU Siaga Medika",
+    "emergencyMode": false,
+    "customMessages": [
+      {
+        "text": "Butuh Informasi ke Loket 5",
+        "title": "Info"
+      }
+    ]
+  }
+]

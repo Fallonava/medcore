@@ -1,0 +1,11 @@
+name = "medcore-admin"
+compatibility_date = "2026-04-29"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+# Place your public environment variables here if needed
+# NEXT_PUBLIC_APP_URL = "https://medcore.fallonava.my.id"
+
+[triggers]
+# Run every minute
+crons = ["* * * * *"]

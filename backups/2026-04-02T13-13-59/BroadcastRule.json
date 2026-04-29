@@ -1,0 +1,34 @@
+[
+  {
+    "id": "cmnetwq2a0007aw6x5kcqlrv6",
+    "message": "Sistem sedang dalam pemeliharaan terjadwal. Layanan akan kembali normal dalam beberapa saat.",
+    "alertLevel": "Information",
+    "targetZone": "All Zones",
+    "duration": 60,
+    "active": false
+  },
+  {
+    "id": "cmnetxfy90008aw6x1xgfuee5",
+    "message": "hj",
+    "alertLevel": "Information",
+    "targetZone": "All Zones",
+    "duration": 60,
+    "active": false
+  },
+  {
+    "id": "cmnetxt0j0009aw6xuu32k345",
+    "message": "Sistem sedang dalam pemeliharaan terjadwal. Layanan akan kembali normal dalam beberapa saat.",
+    "alertLevel": "Information",
+    "targetZone": "All Zones",
+    "duration": 60,
+    "active": false
+  },
+  {
+    "id": "cmnfdkk7o0005no6xzdormm97",
+    "message": "Sistem sedang dalam pemeliharaan terjadwal. Layanan akan kembali normal dalam beberapa saat.",
+    "alertLevel": "Information",
+    "targetZone": "All Zones",
+    "duration": 60,
+    "active": false
+  }
+]

@@ -1,0 +1,68 @@
+2026/04/11-00:54:40.678 2780 Creating DB F:\Next\admin-dashboard\wa-bot\sessions\session\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb since it was missing.
+2026/04/11-00:54:40.734 2780 Reusing MANIFEST F:\Next\admin-dashboard\wa-bot\sessions\session\Default\IndexedDB\https_web.whatsapp.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/04/11-00:55:25.656 3ce4 Level-0 table #5: started
+2026/04/11-00:55:25.837 3ce4 Level-0 table #5: 998104 bytes OK
+2026/04/11-00:55:25.870 3ce4 Delete type=0 #3
+2026/04/11-00:55:27.217 4438 Level-0 table #7: started
+2026/04/11-00:55:27.390 4438 Level-0 table #7: 1265321 bytes OK
+2026/04/11-00:55:27.414 4438 Delete type=0 #4
+2026/04/11-00:55:27.977 16c8 Compacting 1@1 + 1@2 files
+2026/04/11-00:55:28.150 16c8 Generated table #8@1: 22297 keys, 1305583 bytes
+2026/04/11-00:55:28.150 16c8 Compacted 1@1 + 1@2 files => 1305583 bytes
+2026/04/11-00:55:28.213 16c8 compacted to: files[ 0 0 1 0 0 0 0 ]
+2026/04/11-00:55:28.214 16c8 Delete type=2 #5
+2026/04/11-00:55:28.214 16c8 Delete type=2 #7
+2026/04/11-00:55:31.082 3ce4 Level-0 table #10: started
+2026/04/11-00:55:31.776 3ce4 Level-0 table #10: 1177686 bytes OK
+2026/04/11-00:55:32.279 3ce4 Delete type=0 #6
+2026/04/11-00:55:32.487 16c8 Compacting 1@1 + 1@2 files
+2026/04/11-00:55:32.691 16c8 Generated table #11@1: 34072 keys, 1907261 bytes
+2026/04/11-00:55:32.691 16c8 Compacted 1@1 + 1@2 files => 1907261 bytes
+2026/04/11-00:55:32.724 16c8 compacted to: files[ 0 0 1 0 0 0 0 ]
+2026/04/11-00:55:34.193 16c8 Level-0 table #13: started
+2026/04/11-00:55:34.420 16c8 Level-0 table #13: 1312937 bytes OK
+2026/04/11-00:55:34.714 16c8 Delete type=2 #8
+2026/04/11-00:55:34.714 16c8 Delete type=0 #9
+2026/04/11-00:55:34.714 16c8 Delete type=2 #10
+2026/04/11-00:55:34.756 16c8 Compacting 1@1 + 1@2 files
+2026/04/11-00:55:35.017 16c8 Generated table #14@1: 27368 keys, 2190281 bytes
+2026/04/11-00:55:35.106 16c8 Generated table #15@1: 15342 keys, 482296 bytes
+2026/04/11-00:55:35.106 16c8 Compacted 1@1 + 1@2 files => 2672577 bytes
+2026/04/11-00:55:35.124 16c8 compacted to: files[ 0 0 2 0 0 0 0 ]
+2026/04/11-00:55:35.319 4438 Level-0 table #17: started
+2026/04/11-00:55:35.490 4438 Level-0 table #17: 1120066 bytes OK
+2026/04/11-00:55:35.503 4438 Delete type=2 #11
+2026/04/11-00:55:35.503 4438 Delete type=0 #12
+2026/04/11-00:55:35.503 4438 Delete type=2 #13
+2026/04/11-00:55:35.521 4438 Compacting 1@1 + 2@2 files
+2026/04/11-00:55:35.784 4438 Generated table #18@1: 36345 keys, 2190069 bytes
+2026/04/11-00:55:36.141 4438 Generated table #19@1: 23341 keys, 1174413 bytes
+2026/04/11-00:55:36.141 4438 Compacted 1@1 + 2@2 files => 3364482 bytes
+2026/04/11-00:55:36.168 4438 compacted to: files[ 0 0 2 0 0 0 0 ]
+2026/04/11-00:55:36.169 4438 Delete type=2 #14
+2026/04/11-00:55:36.169 4438 Delete type=2 #15
+2026/04/11-00:55:36.169 4438 Delete type=2 #17
+2026/04/11-00:55:36.170 4438 Level-0 table #21: started
+2026/04/11-00:55:36.272 4438 Level-0 table #21: 1245400 bytes OK
+2026/04/11-00:55:36.302 4438 Delete type=0 #16
+2026/04/11-00:55:36.564 16c8 Compacting 1@1 + 2@2 files
+2026/04/11-00:55:36.737 16c8 Generated table #22@1: 30470 keys, 2184553 bytes
+2026/04/11-00:55:36.831 16c8 Generated table #23@1: 23891 keys, 1087891 bytes
+2026/04/11-00:55:36.831 16c8 Compacted 1@1 + 2@2 files => 3272444 bytes
+2026/04/11-00:55:36.868 16c8 compacted to: files[ 0 0 2 0 0 0 0 ]
+2026/04/11-00:55:36.868 16c8 Delete type=2 #18
+2026/04/11-00:55:36.869 16c8 Delete type=2 #19
+2026/04/11-00:55:36.869 16c8 Delete type=2 #21
+2026/04/11-00:55:42.787 16c8 Level-0 table #25: started
+2026/04/11-00:55:43.298 16c8 Level-0 table #25: 1036371 bytes OK
+2026/04/11-00:55:43.359 16c8 Delete type=0 #20
+2026/04/11-00:55:44.565 16c8 Compacting 1@1 + 2@2 files
+2026/04/11-00:55:45.291 16c8 Generated table #26@1: 30846 keys, 2186469 bytes
+2026/04/11-00:55:45.587 16c8 Generated table #27@1: 27694 keys, 1220102 bytes
+2026/04/11-00:55:45.587 16c8 Compacted 1@1 + 2@2 files => 3406571 bytes
+2026/04/11-00:55:45.658 16c8 compacted to: files[ 0 0 2 0 0 0 0 ]
+2026/04/11-00:55:45.659 16c8 Delete type=2 #22
+2026/04/11-00:55:45.659 16c8 Delete type=2 #23
+2026/04/11-00:55:45.659 16c8 Delete type=2 #25
+2026/04/11-00:55:59.056 16c8 Level-0 table #29: started
+2026/04/11-00:55:59.190 4438 Current memtable full; waiting...

@@ -1,0 +1,20 @@
+{
+  "backupDate": "2026-04-02T13:14:00.106Z",
+  "backupDir": "F:\\Next\\admin-dashboard\\backups\\2026-04-02T13-13-59",
+  "database": "medcoredb @ 192.168.1.12:5433",
+  "tables": {
+    "Doctor": 28,
+    "Shift": 107,
+    "LeaveRequest": 50,
+    "User": 3,
+    "Settings": 1,
+    "AutomationLog": 338,
+    "AutomationRule": 0,
+    "BroadcastRule": 4,
+    "AuditLog": 77,
+    "Role": 2,
+    "RolePermission": 26,
+    "RefreshToken": 579
+  },
+  "totalRows": 1215
+}

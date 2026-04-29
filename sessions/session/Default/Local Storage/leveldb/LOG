@@ -1,0 +1,6 @@
+2026/04/14-18:02:14.185 3d68 Reusing MANIFEST F:\Next\admin-dashboard\sessions\session\Default\Local Storage\leveldb/MANIFEST-000001
+2026/04/14-18:02:14.207 3d68 Recovering log #3
+2026/04/14-18:02:14.210 3d68 Reusing old log F:\Next\admin-dashboard\sessions\session\Default\Local Storage\leveldb/000003.log 
+2026/04/14-18:16:02.028 23f8 Level-0 table #5: started
+2026/04/14-18:16:02.160 23f8 Level-0 table #5: 18444 bytes OK
+2026/04/14-18:16:02.293 23f8 Delete type=0 #3

@@ -1,0 +1,35 @@
+[
+  {
+    "id": "cmndvrlwk000al0rlrfwp3mgk",
+    "username": "display",
+    "password": "$2b$12$iGdICLK3vqKrPoBzFjwhyOGCBRueM/NFLZZ7YF57gApoMinhHmN2q",
+    "name": "display",
+    "isActive": true,
+    "roleId": "cmndvr0cs0007norlux3ueks1",
+    "createdAt": "2026-03-30T17:30:20.317Z",
+    "updatedAt": "2026-04-01T18:56:14.060Z",
+    "lastLogin": "2026-04-01T18:56:14.057Z"
+  },
+  {
+    "id": "cmng5p2af00062xrlqatui8ig",
+    "username": "fallonava",
+    "password": "$2b$12$wHewyrlCjCcq7Ica/gGG7.MN1LjgrcekOcNLfvgk3Ob4twc6FYb/q",
+    "name": "Fallonava",
+    "isActive": true,
+    "roleId": "cmndcw92b0008jw6x0u4xc71b",
+    "createdAt": "2026-04-01T07:43:50.100Z",
+    "updatedAt": "2026-04-02T04:39:07.245Z",
+    "lastLogin": "2026-04-02T04:39:07.223Z"
+  },
+  {
+    "id": "cmndcw9d2000vjw6x090mgpvy",
+    "username": "admin",
+    "password": "$2b$12$yGrv25AmUqrjzc5Bukq6auGq6zrNn37RzuUK.YcCvh3gpfXErXpsO",
+    "name": "Administrator",
+    "isActive": true,
+    "roleId": "cmndcw92b0008jw6x0u4xc71b",
+    "createdAt": "2026-03-30T08:42:04.646Z",
+    "updatedAt": "2026-04-02T06:02:54.776Z",
+    "lastLogin": "2026-04-02T06:02:54.775Z"
+  }
+]

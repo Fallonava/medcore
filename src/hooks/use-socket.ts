@@ -1,43 +1,90 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { io, Socket } from "socket.io-client";
+import { useEffect, useState, useMemo } from "react";
+import Pusher from "pusher-js";
 
-let socket: Socket | null = null;
+// Module-level Pusher singleton
+let pusherInstance: Pusher | null = null;
+
+const EMPTY_ARRAY = Object.freeze([] as any[]);
+
+function getPusher(): Pusher {
+  if (!pusherInstance) {
+    // Make sure to use NEXT_PUBLIC_ variables
+    pusherInstance = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY || 'app-key', {
+      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER || 'ap1',
+    });
+  }
+  return pusherInstance;
+}
+
+type SnapshotData = {
+  doctors: any[];
+  shifts: any[];
+  leaves: any[];
+  settings: any;
+} | null;
 
 export const useSocket = (room?: string) => {
   const [isConnected, setIsConnected] = useState(false);
+  const [data, setData] = useState<SnapshotData>(null);
+  const [lastUpdate, setLastUpdate] = useState<number>(0);
 
   useEffect(() => {
-    // Only connect once per client session to avoid multiple connections
-    if (!socket) {
-      socket = io({
-        path: '/socket.io',
-        autoConnect: true,
-      });
-    }
+    const pusher = getPusher();
+    const channel = pusher.subscribe('medcore-dashboard');
 
-    const onConnect = () => setIsConnected(true);
-    const onDisconnect = () => setIsConnected(false);
-
-    socket.on('connect', onConnect);
-    socket.on('disconnect', onDisconnect);
-
-    // If connected and room provided, join room (e.g., 'schedules', 'queue')
-    if (socket.connected) {
+    channel.bind('pusher:subscription_succeeded', () => {
+      console.log('[Pusher] Connected');
       setIsConnected(true);
-      if (room) socket.emit('join_room', room);
-    } else {
-      socket.connect();
-    }
+      // We no longer trigger sync from client-side via sockets.
+      // Instead, we hit a REST API endpoint to get initial sync data,
+      // or rely on server components. For now, we will fetch it:
+      fetch('/api/sync').then(res => res.json()).then(payload => {
+        setData(payload);
+        setLastUpdate(Date.now());
+      }).catch(err => console.error('[Pusher Initial Sync Error]', err));
+    });
+
+    channel.bind('admin_sync_all', (payload: SnapshotData) => {
+      if (!payload) return;
+      console.log(
+        `[Pusher] Sync received — doctors: ${payload.doctors?.length ?? 0}`
+      );
+      setData(payload);
+      setLastUpdate(Date.now());
+    });
+    
+    channel.bind('schedule_changed', () => {
+      fetch('/api/sync').then(res => res.json()).then(payload => {
+        setData(payload);
+        setLastUpdate(Date.now());
+      });
+    });
 
     return () => {
-      if (socket) {
-        socket.off('connect', onConnect);
-        socket.off('disconnect', onDisconnect);
-      }
+      channel.unbind_all();
+      pusher.unsubscribe('medcore-dashboard');
+      setIsConnected(false);
     };
-  }, [room]);
+  }, []);
 
-  return { socket, isConnected };
+  const refresh = () => {
+    fetch('/api/sync').then(res => res.json()).then(payload => {
+      setData(payload);
+      setLastUpdate(Date.now());
+    });
+  };
+
+  return useMemo(() => ({
+    socket: null, // Socket removed, return null for backwards compatibility
+    isConnected,
+    data,
+    lastUpdate,
+    refresh,
+    doctors: (data?.doctors as any[]) || EMPTY_ARRAY,
+    shifts: (data?.shifts as any[]) || EMPTY_ARRAY,
+    leaves: (data?.leaves as any[]) || EMPTY_ARRAY,
+    settings: data?.settings || null,
+  }), [isConnected, data, lastUpdate]);
 };

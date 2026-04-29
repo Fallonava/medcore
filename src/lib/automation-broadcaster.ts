@@ -1,11 +1,27 @@
-import { EventEmitter } from 'events';
+import { pusherServer } from './pusher';
+import { logger } from './logger';
 
-// simple in-memory broadcaster for doctor-update notifications
-class Broadcaster extends EventEmitter {}
+export async function notifyDoctorUpdates(updates: Array<{ id: string | number }>) {
+    try {
+        await pusherServer.trigger('medcore-dashboard', 'doctors-update', updates);
+        logger.info('[Pusher] Emitted doctors-update');
+    } catch (e: any) {
+        logger.error(`[Pusher] Emit error: ${e.message}`);
+    }
+}
 
-export const automationBroadcaster = new Broadcaster();
+export async function notifyViaSocket(event: string, data: any) {
+    try {
+        await pusherServer.trigger('medcore-dashboard', event, data);
+    } catch (e: any) {
+        logger.error(`[Pusher] Emit event ${event} error: ${e.message}`);
+    }
+}
 
-// helper to notify after automation run
-export function notifyDoctorUpdates(updates: Array<{ id: string | number }>) {
-    automationBroadcaster.emit('doctors', updates);
+export async function syncAdminData(snapshot: any) {
+    try {
+        await pusherServer.trigger('medcore-dashboard', 'admin_sync_all', snapshot);
+    } catch (e: any) {
+        logger.error(`[Pusher] Emit admin_sync_all error: ${e.message}`);
+    }
 }

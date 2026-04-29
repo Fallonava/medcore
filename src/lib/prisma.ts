@@ -1,6 +1,6 @@
-import { PrismaClient } from '@prisma/client';
-import { Pool } from 'pg';
-import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaClient } from '@prisma/client/edge';
+import { Pool, neonConfig } from '@neondatabase/serverless';
+import { PrismaNeon } from '@prisma/adapter-neon';
 // Validate all required env vars on first import (throws if missing)
 import '@/lib/env';
 
@@ -66,7 +66,7 @@ const prismaClientSingleton = () => {
     idleTimeoutMillis: 10000, // Close idle connections after 10 seconds to free up DB resources
     connectionTimeoutMillis: 5000, // Return an error after 5 seconds if connection could not be established
   });
-  const adapter = new PrismaPg(pool);
+  const adapter = new PrismaNeon(pool);
   const base = new PrismaClient({ adapter });
   return addSoftDelete(base);
 };

@@ -1,0 +1,158 @@
+[
+  {
+    "id": "cmndcw92j0009jw6xk4oxzudf",
+    "resource": "denah_live",
+    "action": "read",
+    "roleId": "cmndcw92b0008jw6x0u4xc71b"
+  },
+  {
+    "id": "cmndcw92j000ajw6xgwlihac3",
+    "resource": "denah_live",
+    "action": "write",
+    "roleId": "cmndcw92b0008jw6x0u4xc71b"
+  },
+  {
+    "id": "cmndcw92j000bjw6xzbbiz7ai",
+    "resource": "kontrol_status",
+    "action": "read",
+    "roleId": "cmndcw92b0008jw6x0u4xc71b"
+  },
+  {
+    "id": "cmndcw92j000cjw6xcfhm6jn3",
+    "resource": "kontrol_status",
+    "action": "write",
+    "roleId": "cmndcw92b0008jw6x0u4xc71b"
+  },
+  {
+    "id": "cmndcw92j000djw6xyofo24ku",
+    "resource": "schedules",
+    "action": "read",
+    "roleId": "cmndcw92b0008jw6x0u4xc71b"
+  },
+  {
+    "id": "cmndcw92k000ejw6xu1e9bnhh",
+    "resource": "schedules",
+    "action": "write",
+    "roleId": "cmndcw92b0008jw6x0u4xc71b"
+  },
+  {
+    "id": "cmndcw92k000fjw6x4mqiglgb",
+    "resource": "doctors",
+    "action": "read",
+    "roleId": "cmndcw92b0008jw6x0u4xc71b"
+  },
+  {
+    "id": "cmndcw92k000gjw6x5ni6du4n",
+    "resource": "doctors",
+    "action": "write",
+    "roleId": "cmndcw92b0008jw6x0u4xc71b"
+  },
+  {
+    "id": "cmndcw92k000hjw6xct71ysan",
+    "resource": "leaves",
+    "action": "read",
+    "roleId": "cmndcw92b0008jw6x0u4xc71b"
+  },
+  {
+    "id": "cmndcw92k000ijw6xz2vf5bmy",
+    "resource": "leaves",
+    "action": "write",
+    "roleId": "cmndcw92b0008jw6x0u4xc71b"
+  },
+  {
+    "id": "cmndcw92k000jjw6x7lsfrbdu",
+    "resource": "rekap_harian",
+    "action": "read",
+    "roleId": "cmndcw92b0008jw6x0u4xc71b"
+  },
+  {
+    "id": "cmndcw92k000kjw6x16jwtnrq",
+    "resource": "rekap_harian",
+    "action": "write",
+    "roleId": "cmndcw92b0008jw6x0u4xc71b"
+  },
+  {
+    "id": "cmndcw92k000ljw6x20pm964j",
+    "resource": "automation",
+    "action": "read",
+    "roleId": "cmndcw92b0008jw6x0u4xc71b"
+  },
+  {
+    "id": "cmndcw92k000mjw6x8t1v8acn",
+    "resource": "automation",
+    "action": "write",
+    "roleId": "cmndcw92b0008jw6x0u4xc71b"
+  },
+  {
+    "id": "cmndcw92k000njw6xjqvasf7m",
+    "resource": "display_tv",
+    "action": "read",
+    "roleId": "cmndcw92b0008jw6x0u4xc71b"
+  },
+  {
+    "id": "cmndcw92k000ojw6xiodr5jek",
+    "resource": "display_tv",
+    "action": "write",
+    "roleId": "cmndcw92b0008jw6x0u4xc71b"
+  },
+  {
+    "id": "cmndcw92k000pjw6x26abm13d",
+    "resource": "users",
+    "action": "read",
+    "roleId": "cmndcw92b0008jw6x0u4xc71b"
+  },
+  {
+    "id": "cmndcw92k000qjw6xmqqes12g",
+    "resource": "users",
+    "action": "write",
+    "roleId": "cmndcw92b0008jw6x0u4xc71b"
+  },
+  {
+    "id": "cmndcw92k000rjw6x41g3qqxe",
+    "resource": "access",
+    "action": "read",
+    "roleId": "cmndcw92b0008jw6x0u4xc71b"
+  },
+  {
+    "id": "cmndcw92k000sjw6xw8yzrz5d",
+    "resource": "access",
+    "action": "write",
+    "roleId": "cmndcw92b0008jw6x0u4xc71b"
+  },
+  {
+    "id": "cmndcw92k000tjw6xi20gpghv",
+    "resource": "settings",
+    "action": "read",
+    "roleId": "cmndcw92b0008jw6x0u4xc71b"
+  },
+  {
+    "id": "cmndcw92k000ujw6x2bdwpaiw",
+    "resource": "settings",
+    "action": "write",
+    "roleId": "cmndcw92b0008jw6x0u4xc71b"
+  },
+  {
+    "id": "cmndvr0cx0008norlmezlubpr",
+    "resource": "denah_live",
+    "action": "read",
+    "roleId": "cmndvr0cs0007norlux3ueks1"
+  },
+  {
+    "id": "cmndvr0cx0009norlmzes2cvg",
+    "resource": "schedules",
+    "action": "read",
+    "roleId": "cmndvr0cs0007norlux3ueks1"
+  },
+  {
+    "id": "cmndvr0cx000anorlr2b76ctu",
+    "resource": "leaves",
+    "action": "read",
+    "roleId": "cmndvr0cs0007norlux3ueks1"
+  },
+  {
+    "id": "cmndvr0cx000bnorl02767b5a",
+    "resource": "display_tv",
+    "action": "read",
+    "roleId": "cmndvr0cs0007norlux3ueks1"
+  }
+]

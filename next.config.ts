@@ -12,7 +12,6 @@ const nextConfig: NextConfig = {
   output: "standalone",
   // These packages use native Node.js APIs and must NOT be bundled by webpack.
   // They are kept as external require() calls in the standalone output.
-  serverExternalPackages: ['redis', 'bullmq', 'bcryptjs', 'pg', 'node-cron'],
 
   async headers() {
     return [
