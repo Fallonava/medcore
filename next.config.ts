@@ -9,7 +9,7 @@ const withSerwist = withSerwistInit({
 });
 
 const nextConfig: NextConfig = {
-  output: "standalone",
+  // NOTE: Do NOT set output: "standalone" — incompatible with @cloudflare/next-on-pages
   // These packages use native Node.js APIs and must NOT be bundled by webpack.
   // They are kept as external require() calls in the standalone output.
 
