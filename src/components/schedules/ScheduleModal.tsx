@@ -191,7 +191,7 @@ export function ScheduleModal({ doctor, shifts, isOpen, onClose, onUpdate }: Sch
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ...form, id: editId, doctorId: doctor.id, doctor: doctor.name, dayIdx: activeDay })
         });
-        socket.socket?.emit('schedule_updated', { action: 'save_shift' });
+
         onUpdate?.(); reset();
     };
 
@@ -218,14 +218,14 @@ export function ScheduleModal({ doctor, shifts, isOpen, onClose, onUpdate }: Sch
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id: shiftToMove.id, formattedTime: newFormattedTime })
         });
-        socket.socket?.emit('schedule_updated', { action: 'update_time' });
+
         onUpdate?.();
     };
 
     const del = async (id: string) => {
         if (!confirm("Hapus shift ini?")) return;
         await fetch(`/api/shifts?id=${id}`, { method: 'DELETE' });
-        socket.socket?.emit('schedule_updated', { action: 'delete_shift' });
+
         onUpdate?.(); setExpandId(null);
     };
 
@@ -237,7 +237,7 @@ export function ScheduleModal({ doctor, shifts, isOpen, onClose, onUpdate }: Sch
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ title, doctorId: s.doctorId, doctor: s.doctor, dayIdx: s.dayIdx, formattedTime: s.formattedTime, color: s.color })
         });
-        socket.socket?.emit('schedule_updated', { action: 'duplicate_shift' });
+
         onUpdate?.();
     };
 
@@ -252,7 +252,7 @@ export function ScheduleModal({ doctor, shifts, isOpen, onClose, onUpdate }: Sch
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id: s.id, disabledDates: newVal })
             });
-            socket.socket?.emit('schedule_updated', { action: 'toggle_shift' });
+
             onUpdate?.();
             setSuccessMsg(isOff ? "Shift diaktifkan kembali" : "Shift dinonaktifkan untuk hari ini");
             setTimeout(() => setSuccessMsg(null), 3000);
@@ -269,7 +269,7 @@ export function ScheduleModal({ doctor, shifts, isOpen, onClose, onUpdate }: Sch
         await fetch('/api/shifts', {
             method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: s.id, disabledDates: newVal })
         });
-        socket.socket?.emit('schedule_updated', { action: 'add_disabled_date' });
+
         onUpdate?.();
     };
 
@@ -278,7 +278,7 @@ export function ScheduleModal({ doctor, shifts, isOpen, onClose, onUpdate }: Sch
         await fetch('/api/shifts', {
             method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: s.id, disabledDates: newVal })
         });
-        socket.socket?.emit('schedule_updated', { action: 'rm_disabled_date' });
+
         onUpdate?.();
     };
 
