@@ -1,7 +1,7 @@
 import { pusherServer } from './pusher';
 import { logger } from './logger';
 
-export async function notifyDoctorUpdates(updates: Array<{ id: string | number }>) {
+export async function notifyDoctorUpdates(updates: Array<{ id: string | number; status?: string }>) {
     try {
         await pusherServer.trigger('medcore-dashboard', 'doctors-update', updates);
         logger.info('[Pusher] Emitted doctors-update');
