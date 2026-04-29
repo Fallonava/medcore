@@ -66,7 +66,7 @@ const prismaClientSingleton = () => {
     idleTimeoutMillis: 10000, // Close idle connections after 10 seconds to free up DB resources
     connectionTimeoutMillis: 5000, // Return an error after 5 seconds if connection could not be established
   });
-  const adapter = new PrismaNeon(pool);
+  const adapter = new PrismaNeon(pool as any);
   const base = new PrismaClient({ adapter });
   return addSoftDelete(base);
 };
