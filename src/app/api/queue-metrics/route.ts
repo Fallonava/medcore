@@ -1,28 +1,15 @@
 export const runtime = 'edge';
-import { getAutomationQueue } from '@/lib/automation-queue';
-
 export const dynamic = 'force-dynamic';
 
+// BullMQ/Redis queue is not available in Cloudflare Edge runtime.
+// Return empty metrics — Cloudflare Cron Trigger handles automation scheduling.
 export async function GET() {
-    try {
-        const queue = getAutomationQueue();
-        const metrics = await queue.getMetrics();
-        const cbMetrics = queue.getCircuitBreakerState();
-        const failedJobs = await queue.getFailedJobs(5);
-
-        return Response.json({
-            success: true,
-            queue: metrics,
-            circuitBreaker: cbMetrics,
-            failedJobs: failedJobs,
-            timestamp: new Date().toISOString()
-        });
-    } catch (error) {
-        console.error('[queue metrics] error:', error);
-        return Response.json({
-            success: false,
-            error: (error as any)?.message,
-            queue: { active: 0, delayed: 0, failed: 0, completed: 0, waiting: 0 }
-        });
-    }
+    return Response.json({
+        success: true,
+        queue: { active: 0, delayed: 0, failed: 0, completed: 0, waiting: 0 },
+        circuitBreaker: { state: 'disabled', reason: 'Edge runtime — no Redis available' },
+        failedJobs: [],
+        timestamp: new Date().toISOString(),
+        note: 'Queue metrics disabled on Cloudflare Edge. Use /api/automation-logs instead.'
+    });
 }
