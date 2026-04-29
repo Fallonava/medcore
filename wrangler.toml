@@ -7,5 +7,8 @@ compatibility_flags = ["nodejs_compat"]
 # NEXT_PUBLIC_APP_URL = "https://medcore.fallonava.my.id"
 
 [triggers]
-# Run every minute
-crons = ["* * * * *"]
+# ── Cloudflare Free Tier: 100.000 requests/hari ───────────────────────────
+# Setiap menit (1440x/hari) terlalu boros. Kita pakai setiap 5 menit.
+# 5 menit = 288 eksekusi/hari → aman jauh di bawah limit.
+# Delay status dokter maksimal 5 menit, masih sangat layak untuk RS.
+crons = ["*/5 * * * *"]
