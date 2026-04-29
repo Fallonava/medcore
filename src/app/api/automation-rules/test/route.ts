@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import type { Doctor, Shift, LeaveRequest } from '@/lib/data-service';

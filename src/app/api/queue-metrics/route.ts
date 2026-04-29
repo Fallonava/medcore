@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { getAutomationQueue } from '@/lib/automation-queue';
 
 export const dynamic = 'force-dynamic';

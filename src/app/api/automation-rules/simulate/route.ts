@@ -1,3 +1,4 @@
+export const runtime = 'edge';
 import { simulateRulesBatch } from '@/lib/automation-simulator';
 import { prisma } from '@/lib/prisma';
 
