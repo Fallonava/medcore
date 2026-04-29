@@ -1,23 +1,21 @@
 import { SignJWT, jwtVerify } from 'jose';
 import bcrypt from 'bcryptjs';
-import crypto from 'crypto';
 import { NextResponse } from 'next/server';
 import { prisma } from './prisma';
 import { RESOURCES, SessionPayload } from './auth-shared';
 import { getCachedPermissions, setCachedPermissions, invalidateRbacCache } from './rbac-cache';
 import { cookies } from 'next/headers';
 
-// ─── Constants ───
-// JWT_SECRET is validated as required (≥32 chars) by env.ts (Zod) on startup.
-// ADMIN_KEY is intentionally NOT used here — it serves a different purpose
-// (server-to-server API bypass) and mixing them would be a security risk.
-if (!process.env.JWT_SECRET) {
-  throw new Error('CRITICAL: JWT_SECRET environment variable is missing. Check your .env file.');
+// Lazy accessors — only throw when a function is actually called at runtime,
+// not at module evaluation time (which would break CF Pages build).
+function getAccessSecret(): Uint8Array {
+  if (!process.env.JWT_SECRET) throw new Error('CRITICAL: JWT_SECRET environment variable is missing.');
+  return new TextEncoder().encode(process.env.JWT_SECRET);
 }
-
-const ACCESS_SECRET = new TextEncoder().encode(process.env.JWT_SECRET);
-// Refresh tokens use a separate derived secret for extra security
-const REFRESH_SECRET = new TextEncoder().encode(process.env.JWT_SECRET + '_refresh');
+function getRefreshSecret(): Uint8Array {
+  if (!process.env.JWT_SECRET) throw new Error('CRITICAL: JWT_SECRET environment variable is missing.');
+  return new TextEncoder().encode(process.env.JWT_SECRET + '_refresh');
+}
 
 const ACCESS_COOKIE  = 'medcore_session';
 const REFRESH_COOKIE = 'medcore_refresh';
@@ -40,12 +38,12 @@ export async function createAccessToken(payload: SessionPayload): Promise<string
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime(ACCESS_TOKEN_EXPIRY)
-    .sign(ACCESS_SECRET);
+    .sign(getAccessSecret());
 }
 
 export async function verifyToken(token: string): Promise<SessionPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, ACCESS_SECRET);
+    const { payload } = await jwtVerify(token, getAccessSecret());
     return payload as unknown as SessionPayload;
   } catch {
     return null;
@@ -61,8 +59,11 @@ export async function createRefreshToken(
   userId: string,
   meta?: { userAgent?: string; ipAddress?: string }
 ): Promise<string> {
-  const rawToken = crypto.randomBytes(48).toString('hex'); // 96 hex chars
-  const hashed   = crypto.createHash('sha256').update(rawToken).digest('hex');
+  // Use Web Crypto API (Edge-compatible) instead of Node.js crypto
+  const rawTokenBytes = globalThis.crypto.getRandomValues(new Uint8Array(48));
+  const rawToken = Array.from(rawTokenBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+  const hashBuffer = await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(rawToken));
+  const hashed = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
 
   const expiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRY * 1000);
 
@@ -84,7 +85,8 @@ export async function createRefreshToken(
  * Returns the userId if valid and not revoked/expired, null otherwise.
  */
 export async function verifyRefreshToken(rawToken: string): Promise<string | null> {
-  const hashed = crypto.createHash('sha256').update(rawToken).digest('hex');
+  const hashBuffer = await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(rawToken));
+  const hashed = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
 
   const record = await prisma.refreshToken.findUnique({ where: { token: hashed } });
   if (!record) return null;
@@ -98,7 +100,8 @@ export async function verifyRefreshToken(rawToken: string): Promise<string | nul
  * Revoke a single refresh token (logout from current device).
  */
 export async function revokeRefreshToken(rawToken: string): Promise<void> {
-  const hashed = crypto.createHash('sha256').update(rawToken).digest('hex');
+  const hashBuffer = await globalThis.crypto.subtle.digest('SHA-256', new TextEncoder().encode(rawToken));
+  const hashed = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
   await prisma.refreshToken.updateMany({
     where: { token: hashed },
     data: { revokedAt: new Date() },
