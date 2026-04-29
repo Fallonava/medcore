@@ -6,7 +6,7 @@ import { X, Clock, Plus, Trash2, Save, Copy, Power, CalendarOff, Edit3, ChevronD
 import { cn } from "@/lib/utils";
 import type { Doctor, Shift } from "@/lib/data-service";
 import { ShiftCalendarGrid } from "./ShiftCalendarGrid";
-import { useSocket } from "@/hooks/use-socket";
+
 
 interface ScheduleModalProps {
     doctor: Doctor | null;
@@ -171,7 +171,7 @@ export function ScheduleModal({ doctor, shifts, isOpen, onClose, onUpdate }: Sch
     };
 
     const [mounted, setMounted] = useState(false);
-    const socket = useSocket();
+
 
     useEffect(() => { setMounted(true); }, []);
 

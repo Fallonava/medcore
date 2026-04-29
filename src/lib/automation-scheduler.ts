@@ -15,9 +15,8 @@ declare global {
 }
 
 export async function initAutomationScheduler() {
-  // Skip ONLY if running in Vercel (Vercel uses its own external Cron Service)
-  // On EC2/self-hosted production, node-cron harus jalan
-  if (process.env.VERCEL) {
+  // Skip if running in Vercel OR Cloudflare Pages (Edge environments use their own cron triggers)
+  if (process.env.VERCEL || process.env.CF_PAGES) {
     return;
   }
 

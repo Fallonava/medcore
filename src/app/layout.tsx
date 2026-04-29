@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google"; // Using Inter as requested for modern look
 import { initAutomationScheduler } from "@/lib/automation-scheduler";
 
-// scheduler should start on server-side only
-// In Vercel/Production, we use Vercel Crons instead of in-memory node-cron
-if (typeof window === 'undefined' && !process.env.VERCEL) {
+// Skip scheduler on Edge environments (Vercel/Cloudflare) - they use their own cron triggers
+if (typeof window === 'undefined' && !process.env.VERCEL && !process.env.CF_PAGES) {
   initAutomationScheduler().catch(err => {
     console.error('Failed to initialize automation scheduler:', err);
   });
