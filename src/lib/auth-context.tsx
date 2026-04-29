@@ -16,7 +16,7 @@ interface AuthContextType {
   canWrite: (resource: string) => boolean;
   isSuperAdmin: boolean;
   refresh: () => Promise<void>;
-  login: (username: string, password: string) => Promise<LoginResult>;
+  login: (username: string, password: string, turnstileToken?: string) => Promise<LoginResult>;
   logout: () => Promise<void>;
 }
 
@@ -99,12 +99,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ─── Centralized Login ───
   const login = useCallback(
-    async (username: string, password: string): Promise<LoginResult> => {
+    async (username: string, password: string, turnstileToken?: string): Promise<LoginResult> => {
       try {
         const res = await fetch("/api/auth/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username, password }),
+          body: JSON.stringify({ username, password, turnstileToken }),
         });
 
         if (res.ok) {

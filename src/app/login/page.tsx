@@ -4,12 +4,14 @@ import { useState } from "react";
 import { Activity, Lock, User, ArrowRight, ShieldCheck, AlertCircle, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
+import { Turnstile } from '@marsidev/react-turnstile';
 
 export default function LoginPage() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
+    const [turnstileToken, setTurnstileToken] = useState("");
     const { login } = useAuth();
 
     const handleLogin = async (e: React.FormEvent) => {
@@ -20,7 +22,9 @@ export default function LoginPage() {
         setError("");
 
         try {
-            const result = await login(username, password);
+            // Kita pass turnstileToken ke fungsi login jika ada implementasi backend
+            // (Disini kita asumsikan auth-context meng-handle pass token, atau kita skip di UI jika auth-context belum mendukung)
+            const result = await login(username, password, turnstileToken);
             if (!result.success) {
                 setError(result.error || "Username atau password salah.");
             }
@@ -107,9 +111,18 @@ export default function LoginPage() {
                             </div>
                         </div>
 
+                        {/* Turnstile Widget */}
+                        <div className="flex justify-center py-2">
+                            <Turnstile 
+                                siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '1x00000000000000000000AA'} 
+                                onSuccess={(token) => setTurnstileToken(token)}
+                                onError={() => setError("Gagal memverifikasi captcha.")}
+                            />
+                        </div>
+
                         <button
                             type="submit"
-                            disabled={loading || !username || !password}
+                            disabled={loading || !username || !password || !turnstileToken}
                             className="group relative w-full flex justify-center py-4 px-4 text-sm font-bold rounded-2xl text-white bg-slate-900 hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-900/10 transition-all overflow-hidden disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_8px_20px_rgba(0,0,0,0.08)] active:scale-[0.98]"
                         >
                             {/* Hover highlight */}

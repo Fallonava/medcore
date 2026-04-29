@@ -55,7 +55,26 @@ export const useSocket = (room?: string) => {
       setLastUpdate(Date.now());
     });
     
+    channel.bind('doctors-update', (updates: Array<{ id: string | number, status?: string }>) => {
+      if (!updates || !updates.length) return;
+      console.log(`[Pusher] Doctors update received for ${updates.length} doctors`);
+      
+      setData(prev => {
+        if (!prev) return prev;
+        
+        // Zero-fetch diffing: update local state without fetching from API
+        const newDoctors = prev.doctors.map(doc => {
+          const update = updates.find(u => String(u.id) === String(doc.id));
+          return update ? { ...doc, ...update } : doc;
+        });
+        
+        return { ...prev, doctors: newDoctors };
+      });
+      setLastUpdate(Date.now());
+    });
+
     channel.bind('schedule_changed', () => {
+      // Fallback for full sync if needed
       fetch('/api/sync').then(res => res.json()).then(payload => {
         setData(payload);
         setLastUpdate(Date.now());

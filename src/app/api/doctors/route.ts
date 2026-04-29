@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { requireAdmin, requirePermission } from '@/lib/api-utils';
 import { notifyDoctorUpdates } from '@/lib/automation-broadcaster';
+import { revalidateTag } from 'next/cache';
 
 export const dynamic = 'force-dynamic';
 
@@ -80,7 +81,8 @@ export async function POST(req: Request) {
             }
         });
         const docs = await prisma.doctor.findMany({ select: { id: true } });
-        notifyDoctorUpdates(docs.map(d => ({ id: String(d.id) })));
+        notifyDoctorUpdates(docs.map(d => ({ id: String(d.id), status: 'TIDAK_PRAKTEK' })));
+        revalidateTag('snapshot');
         return NextResponse.json({ success: true, message: "All doctors reset." });
     }
 
@@ -98,7 +100,8 @@ export async function POST(req: Request) {
                     });
                 })
             );
-            notifyDoctorUpdates(validated.map(u => ({ id: u.id })));
+            notifyDoctorUpdates(validated.map(u => ({ id: u.id, status: u.status as string })));
+            revalidateTag('snapshot');
             return NextResponse.json({ success: true, count: results.length });
         } catch (err) {
             if (err instanceof z.ZodError) {
@@ -121,6 +124,7 @@ export async function POST(req: Request) {
                     })
                 )
             );
+            revalidateTag('snapshot');
             return NextResponse.json({ success: true });
         } catch (err) {
             if (err instanceof z.ZodError) {
@@ -136,6 +140,7 @@ export async function POST(req: Request) {
         const validated = CreateDoctorSchema.parse(body);
 
         const newDoctor = await prisma.doctor.create({ data: validated as any });
+        revalidateTag('snapshot');
         return NextResponse.json({
             ...newDoctor,
             lastManualOverride: newDoctor.lastManualOverride ? Number(newDoctor.lastManualOverride) : undefined
@@ -162,7 +167,8 @@ export async function PUT(req: Request) {
             data: data as any
         });
 
-        notifyDoctorUpdates([{ id: String(updated.id) }]);
+        notifyDoctorUpdates([{ id: String(updated.id), status: updated.status as string }]);
+        revalidateTag('snapshot');
 
         return NextResponse.json({
             ...updated,
@@ -187,5 +193,6 @@ export async function DELETE(req: Request) {
     await prisma.doctor.delete({
         where: { id: String(id) }
     });
+    revalidateTag('snapshot');
     return NextResponse.json({ success: true });
 }
