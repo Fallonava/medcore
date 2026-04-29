@@ -1,6 +1,7 @@
-name = "medcore-admin"
+name = "medcore"
 compatibility_date = "2026-04-29"
 compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = ".vercel/output/static"
 
 [vars]
 # Place your public environment variables here if needed
