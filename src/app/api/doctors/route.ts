@@ -1,6 +1,7 @@
 export const runtime = 'edge';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { DoctorStatus } from '@prisma/client/edge';
 import { z } from 'zod';
 import { requireAdmin, requirePermission } from '@/lib/api-utils';
 import { notifyDoctorUpdates } from '@/lib/automation-broadcaster';
@@ -74,7 +75,7 @@ export async function POST(req: Request) {
     if (action === 'reset') {
         await prisma.doctor.updateMany({
             data: {
-                status: 'TIDAK_PRAKTEK',
+                status: DoctorStatus.TIDAK_PRAKTEK,
                 queueCode: '',
                 lastCall: null,
                 registrationTime: null,
