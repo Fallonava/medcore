@@ -13,7 +13,9 @@ const nextConfig: NextConfig = {
   eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
   experimental: {
-    memoryBasedWorkersCount: true,
+    workerThreads: false,
+    cpus: 1,
+    turbopack: {},
   },
 
   async headers() {
