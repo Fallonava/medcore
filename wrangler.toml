@@ -7,3 +7,4 @@ pages_build_output_dir = ".vercel/output/static"
 # Place your public environment variables here if needed
 # NEXT_PUBLIC_APP_URL = "https://medcore.fallonava.my.id"
 
+
