@@ -48,18 +48,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSentryConfig(withSerwist(nextConfig), {
-  // Sentry organization & project (set in CI/CD or locally)
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
-
-  // Suppress the Sentry CLI output during builds
-  silent: !process.env.CI,
-
-  // Upload source maps for better error stack traces in production
-  widenClientFileUpload: true,
-
-  sourcemaps: {
-    disable: false, // Upload to Sentry, but exclude from public bundle
-  },
-});
+export default withSerwist(nextConfig);
