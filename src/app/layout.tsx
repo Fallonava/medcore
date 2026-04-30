@@ -1,13 +1,5 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google"; // Using Inter as requested for modern look
-import { initAutomationScheduler } from "@/lib/automation-scheduler";
-
-// Skip scheduler on Edge environments (Vercel/Cloudflare) - they use their own cron triggers
-if (typeof window === 'undefined' && !process.env.VERCEL && !process.env.CF_PAGES) {
-  initAutomationScheduler().catch(err => {
-    console.error('Failed to initialize automation scheduler:', err);
-  });
-}
 import "./globals.css";
 import { Sidebar } from "@/components/Sidebar";
 import { BottomNav } from "@/components/BottomNav";

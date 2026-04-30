@@ -281,28 +281,8 @@ export async function runAutomation(): Promise<{ applied: number, failed: number
 
         try {
             if (updates.length > 0) {
-                try {
-                    // Try queue-based approach first (with retry/backoff)
                     try {
-                        const { getAutomationQueue } = await import('./automation-queue');
-                        const queue = getAutomationQueue();
-                        // ONLY add to queue if it's explicitly initialized and connected
-                        // otherwise we fallback to the bulk API
-                        if (queue.isReady()) {
-                            await queue.addBatch(updates);
-                            applied = updates.length;
-                            console.debug('[automation] queued', updates.length, 'jobs');
-                        } else {
-                            throw new Error('Queue not ready');
-                        }
-                    } catch (queueErr) {
-                        // Suppress logs if we are in dev/local and explicitly lacking redis 
-                        const isNoQueueError = queueErr instanceof Error && queueErr.message === 'Queue not ready';
-                        if (!isNoQueueError) {
-                            console.debug('[automation] queue unavailable, using bulk API:', queueErr instanceof Error ? queueErr.message : String(queueErr));
-                        }
-
-                        // Fallback to bulk API endpoint
+                        // Fallback to bulk API endpoint for Cloudflare edge automation
                         const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000';
                         const fallbackRes = await fetch(`${appUrl}/api/doctors?action=bulk`, {
                             method: 'POST',
@@ -314,9 +294,8 @@ export async function runAutomation(): Promise<{ applied: number, failed: number
                         });
                         if (!fallbackRes.ok) throw new Error(`Bulk API failed: ${fallbackRes.status}`);
                         applied = updates.length;
-                    }
-                } catch (fallbackErr) {
-                    console.debug('[automation] bulk API failed, falling back to direct db update:', fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr));
+                    } catch (fallbackErr) {
+                        console.debug('[automation] bulk API failed, falling back to direct db update:', fallbackErr instanceof Error ? fallbackErr.message : String(fallbackErr));
                     // fallback to individual updates with concurrency limit
                     const concurrency = 5;
                     for (let i = 0; i < updates.length; i += concurrency) {
