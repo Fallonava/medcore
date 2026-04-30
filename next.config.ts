@@ -2,12 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // Prevent OOM (Call retries were exceeded) in Cloudflare Pages constrained build container
-  eslint: { ignoreDuringBuilds: true },
   typescript: { ignoreBuildErrors: true },
   experimental: {
     workerThreads: false,
     cpus: 1,
-    turbopack: {},
   },
 
   async headers() {
